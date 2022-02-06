@@ -1,0 +1,3 @@
+[submodule "yake"]
+	path = yake
+	url = https://github.com/LIAAD/yake
