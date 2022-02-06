@@ -3,7 +3,7 @@ Collection of helper functions.
 """
 
 from functools import lru_cache
-from typing import List, Tuple
+from typing import Tuple
 
 import spacy
 
