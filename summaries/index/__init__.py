@@ -1,1 +1,1 @@
-from Index import Index
+from .Index import Index
