@@ -20,7 +20,7 @@ class FrequencyRetriever(Retriever):
     def __init__(self):
         super(FrequencyRetriever, self).__init__()
 
-    def retrieve(self, query: str, index: Index, processor: Language, limit: int = 3) -> List[str]:
+    def retrieve(self, query: str, index: Index, processor: Language, limit: int = 3) -> List[int]:
         query_tokens = self.split_tokens(query, processor)
         occurrences = []
         for token in query_tokens:
@@ -31,8 +31,8 @@ class FrequencyRetriever(Retriever):
                 raise KeyError(f"Query {query} not found in index!")
 
         group_by_doc_id = Counter(occurrences)
-        most_relevant_sentence_ids = [doc_id for doc_id, freq in dict(group_by_doc_id.most_common(limit))]
-        return [index.sources[idx] for idx in most_relevant_sentence_ids]
+        most_relevant_sentence_ids = [doc_id for doc_id, freq in group_by_doc_id.most_common(limit)]
+        return most_relevant_sentence_ids
 
     @staticmethod
     def split_tokens(query: str, processor: Language) -> List[str]:
