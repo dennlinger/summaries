@@ -37,11 +37,13 @@ class DensityPlot:
 
     @staticmethod
     def find_closest_reference_match(summary_sentence: str, reference_sentences: List[str]) -> float:
-        # Check for exact matches first
+        # Check for exact matches first (extractive summary)
         if summary_sentence in reference_sentences:
-            return reference_sentences.index(summary_sentence) / len(reference_sentences)
-
-        return 0 / len(reference_sentences)
+            # Note that the actual position can only range between an open interval of [0, len(reference_sentence) -1
+            relative_position = (reference_sentences.index(summary_sentence) + 1) / len(reference_sentences)
+            return relative_position
+        else:
+            raise NotImplementedError("Non-extractive matches not yet supported")
 
     @staticmethod
     def generate_plot(positions: List[float]):
