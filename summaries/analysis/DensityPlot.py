@@ -5,6 +5,7 @@ summarization systems (and data sources).
 
 from typing import List
 
+from seaborn import histplot
 import matplotlib.pyplot as plt
 from spacy.language import Language
 
@@ -51,5 +52,9 @@ class DensityPlot:
 
     @staticmethod
     def generate_plot(positions: List[float], bins):
-        plt.hist(positions, bins=bins, range=[0.0, 1.0])
+        if len(positions) > 10:
+            plot_kde = True
+        else:
+            plot_kde = False
+        histplot(positions, bins=bins, stat="probability", kde=plot_kde, binrange=(0, 1))
         plt.show()
