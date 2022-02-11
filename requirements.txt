@@ -1,3 +1,4 @@
 yake
 spacy>=3.0
 matplotlib
+seaborn
