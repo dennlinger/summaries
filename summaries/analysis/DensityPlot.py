@@ -26,25 +26,30 @@ class DensityPlot:
         """
 
         reference_positions = []
+        max_article_length = 0
         for reference, summary in zip(references, summaries):
-            reference_sentences = [sentence.text for sentence in self.processor(reference).sents]
-            summary_sentences = [sentence.text for sentence in self.processor(summary).sents]
+            reference_sentences = [sentence.text.strip("\n ") for sentence in self.processor(reference).sents]
+            summary_sentences = [sentence.text.strip("\n ") for sentence in self.processor(summary).sents]
+
+            if len(reference_sentences) > max_article_length:
+                max_article_length = len(reference_sentences)
 
             for summary_sentence in summary_sentences:
                 reference_positions.append(self.find_closest_reference_match(summary_sentence, reference_sentences))
 
-        self.generate_plot(reference_positions)
+        self.generate_plot(reference_positions, min(50, max_article_length))
 
     @staticmethod
     def find_closest_reference_match(summary_sentence: str, reference_sentences: List[str]) -> float:
         # Check for exact matches first (extractive summary)
         if summary_sentence in reference_sentences:
             # Note that the actual position can only range between an open interval of [0, len(reference_sentence) -1
-            relative_position = (reference_sentences.index(summary_sentence) + 1) / len(reference_sentences)
+            relative_position = reference_sentences.index(summary_sentence) / len(reference_sentences)
             return relative_position
         else:
             raise NotImplementedError("Non-extractive matches not yet supported")
 
     @staticmethod
-    def generate_plot(positions: List[float]):
-        plt.hist(positions, bins=50, range=[0.0, 1.0])
+    def generate_plot(positions: List[float], bins):
+        plt.hist(positions, bins=bins, range=[0.0, 1.0])
+        plt.show()
