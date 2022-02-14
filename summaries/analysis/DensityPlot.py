@@ -9,7 +9,7 @@ from seaborn import histplot
 import matplotlib.pyplot as plt
 from spacy.language import Language
 
-from ..utils import get_nlp_model
+from ..utils import get_nlp_model, find_closest_reference_matches
 
 
 class DensityPlot:
@@ -29,29 +29,22 @@ class DensityPlot:
         reference_positions = []
         max_article_length = 0
         for reference, summary in zip(references, summaries):
-            reference_sentences = [sentence.text.strip("\n ") for sentence in self.processor(reference).sents]
-            summary_sentences = [sentence.text.strip("\n ") for sentence in self.processor(summary).sents]
 
-            if len(reference_sentences) > max_article_length:
-                max_article_length = len(reference_sentences)
+            reference_doc = self.processor(reference)
+            summary_doc = self.processor(summary)
 
-            for summary_sentence in summary_sentences:
-                reference_positions.append(self.find_closest_reference_match(summary_sentence, reference_sentences))
+            # Need maximum length to determine lower bound of bins in histogram
+            if len(list(reference_doc.sents)) > max_article_length:
+                max_article_length = len(list(reference_doc.sents))
+
+            # Compute likely source-target alignments
+            reference_positions.extend(find_closest_reference_matches(summary_doc, reference_doc))
 
         self.generate_plot(reference_positions, min(50, max_article_length))
 
     @staticmethod
-    def find_closest_reference_match(summary_sentence: str, reference_sentences: List[str]) -> float:
-        # Check for exact matches first (extractive summary)
-        if summary_sentence in reference_sentences:
-            # Note that the actual position can only range between an open interval of [0, len(reference_sentence) -1
-            relative_position = reference_sentences.index(summary_sentence) / len(reference_sentences)
-            return relative_position
-        else:
-            raise NotImplementedError("Non-extractive matches not yet supported")
-
-    @staticmethod
     def generate_plot(positions: List[float], bins):
+        # Simple hack to only plot a KDE if there are "sufficient" samples available.
         if len(positions) > 10:
             plot_kde = True
         else:
