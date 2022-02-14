@@ -72,6 +72,8 @@ def find_closest_reference_matches(summary_doc: Doc, reference_doc: Doc) -> List
     return relative_positions
 
 
+# TODO: Should not return fractions here, but rather actual text (or optionally, position!)
+#  Best solution would be to write a separate wrapper for the fractional results, and call a general function?
 def max_rouge_2_match(target_sentence: Span, source_text: Doc) -> float:
     """
     Returns the relative position of the closest reference based on maximized ROUGE-2 recall of a single sentence.
