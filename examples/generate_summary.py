@@ -6,8 +6,11 @@ from summaries import AspectSummarizer
 
 
 if __name__ == '__main__':
-    with open("Aachen.txt") as f:
-        source_text = "".join(f.readlines())
+    with open("Aachen_Wiki.txt") as f:
+        source_text = f.readlines()
+
+    source_text = [line.strip("\n ") for line in source_text if line.strip("\n ") and not line.startswith("=")]
+    source_text = " ".join(source_text)
 
     summ = AspectSummarizer("yake", "frequency")
 
