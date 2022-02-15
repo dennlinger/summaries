@@ -4,13 +4,12 @@ Minimal script to generate a summary over a single short article.
 
 from summaries import AspectSummarizer
 
+from extract_relevant_sentence_list import load_text_file
+
 
 if __name__ == '__main__':
-    with open("Aachen_Wiki.txt") as f:
-        source_text = f.readlines()
 
-    source_text = [line.strip("\n ") for line in source_text if line.strip("\n ") and not line.startswith("=")]
-    source_text = " ".join(source_text)
+    source_text = load_text_file("Aachen_Wiki.txt")
 
     summ = AspectSummarizer("yake", "frequency")
 
