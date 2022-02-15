@@ -8,7 +8,7 @@ from typing import List
 from spacy.language import Language
 from rouge_score.rouge_scorer import _create_ngrams
 
-from .utils import max_rouge_2_match, RelevantSentence, get_nlp_model
+from ..utils import max_rouge_2_match, RelevantSentence, get_nlp_model
 
 
 class Rouge2Aligner:
