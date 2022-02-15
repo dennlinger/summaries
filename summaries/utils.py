@@ -2,13 +2,15 @@
 Collection of helper functions.
 """
 
+from collections import namedtuple, Counter
 from functools import lru_cache
+from operator import attrgetter
 from typing import Tuple, List
 
-import spacy
+from rouge_score.rouge_scorer import _create_ngrams, _score_ngrams
 from spacy.language import Doc
 from spacy.tokens import Span
-from rouge_score.rouge_scorer import _create_ngrams, _score_ngrams
+import spacy
 
 supported_languages = {"en", "de"}
 
@@ -52,29 +54,50 @@ def get_nlp_model(size: str, disable: Tuple[str] = tuple(), lang: str = "de"):
     return spacy.load(model_identifier, disable=disable)
 
 
+class RelevantSentence(namedtuple("RelevantSentence", ["sentence", "recall", "relative_position"])):
+    """
+    Wrapper class for named tuple of results, including recall scores and relative position
+    """
+
+
+def print_relevant_sentences(relevant_sentences: List[RelevantSentence], ordered: bool = False) -> None:
+    """
+    Convenience wrapper to print extracted sentences.
+    :param relevant_sentences: List of extracted RelevantSentence objects
+    :param ordered: If true, sort the relevant sentences by their relative position first.
+    :return: None
+    """
+    if ordered:
+        relevant_sentences = sorted(relevant_sentences, key=attrgetter("relative_position"))
+    for sent in relevant_sentences:
+        print(sent.sentence)
+
+
 def find_closest_reference_matches(summary_doc: Doc, reference_doc: Doc) -> List[float]:
     """
     Aggregate function trying to first find an exact match in a reference document, and otherwise
     resorting to ROUGE-2 maximization for finding a related sentence.
     """
 
+    # Note that the actual position is an *open interval* of [0, 1), because we divide by len(reference_sentences)
     relative_positions = []
 
     reference_sentences = [sentence.text for sentence in reference_doc.sents]
+    reference_ngrams = [_create_ngrams([token.lemma_ for token in sentence], n=2) for sentence in reference_doc.sents]
     for summary_sentence in summary_doc.sents:
         # Check for exact matches first (extractive summary)
         if summary_sentence.text in reference_sentences:
-            # Note that the actual position can only range between an open interval of [0, len(reference_sentences))
             relative_positions.append(reference_sentences.index(summary_sentence.text) / len(reference_sentences))
         else:
-            relative_positions.append(max_rouge_2_match(summary_sentence, reference_doc))
+            relative_positions.append(
+                max_rouge_2_match(summary_sentence, reference_sentences, reference_ngrams).relative_position
+            )
 
     return relative_positions
 
 
-# TODO: Should not return fractions here, but rather actual text (or optionally, position!)
-#  Best solution would be to write a separate wrapper for the fractional results, and call a general function?
-def max_rouge_2_match(target_sentence: Span, source_text: Doc) -> float:
+def max_rouge_2_match(target_sentence: Span, source_sentences: List[str], source_text_ngrams: List[Counter]) -> \
+        RelevantSentence:
     """
     Returns the relative position of the closest reference based on maximized ROUGE-2 recall of a single sentence.
     Uses the spacy lemmatizer to increase chance of overlaps.
@@ -90,9 +113,7 @@ def max_rouge_2_match(target_sentence: Span, source_text: Doc) -> float:
     max_index = -1
 
     # Compute ROUGE-2 recall scores for each sentence in the source document to find the most relevant one.
-    for idx, sentence in enumerate(source_text.sents):
-        source_ngrams = _create_ngrams([token.lemma_ for token in sentence], n=2)
-
+    for idx, source_ngrams in enumerate(source_text_ngrams):
         score = _score_ngrams(target_ngrams=target_ngrams, prediction_ngrams=source_ngrams)
 
         if score.recall > max_score:
@@ -102,5 +123,4 @@ def max_rouge_2_match(target_sentence: Span, source_text: Doc) -> float:
     if max_score < 0 or max_index < 0:
         raise ValueError("No sentence score has been computed!")
     else:
-        return max_index / len(list(source_text.sents))
-
+        return RelevantSentence(source_sentences[max_index], max_score, max_index / len(source_sentences))
