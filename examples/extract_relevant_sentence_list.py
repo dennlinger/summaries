@@ -2,8 +2,7 @@
 Demonstration of Rouge2Aligner
 """
 
-from summaries import Rouge2Aligner
-from summaries.utils import print_relevant_sentences
+from summaries.aligners import Rouge2Aligner
 
 
 def load_text_file(fn: str) -> str:
