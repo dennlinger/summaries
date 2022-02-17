@@ -88,6 +88,6 @@ class AspectSummarizer:
     def split_into_sentence_documents(self, source_documents: List[str]) -> List[str]:
         sentences = []
         for doc_text in source_documents:
-            sentences.extend([str(sentence) for sentence in self.processor(doc_text).sents])
+            sentences.extend([sentence.text for sentence in self.processor(doc_text).sents])
         return sentences
 
