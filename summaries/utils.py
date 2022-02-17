@@ -96,8 +96,10 @@ def find_closest_reference_matches(summary_doc: Doc, reference_doc: Doc) -> List
     return relative_positions
 
 
-def max_rouge_2_match(target_sentence: Span, source_sentences: List[str], source_text_ngrams: List[Counter]) -> \
-        RelevantSentence:
+def max_rouge_2_match(target_sentence: Span,
+                      source_sentences: List[str],
+                      source_text_ngrams: List[Counter]) \
+        -> RelevantSentence:
     """
     Returns the relative position of the closest reference based on maximized ROUGE-2 recall of a single sentence.
     Uses the spacy lemmatizer to increase chance of overlaps.

@@ -3,9 +3,7 @@ Index class with optimized structure for in-memory retrieval.
 TODO: Figure out how efficiently such an approach scales to larger source data sets.
 """
 
-from typing import List, Dict, Set
-
-from ..utils import get_nlp_model
+from typing import List, Dict
 
 
 class Index:
@@ -23,11 +21,10 @@ class Index:
                                  for idx, sentence in enumerate(sources)}
 
         # FIXME: Check tokenization method for faster processing
+        self.term_lookup = {}
         self.build_term_lookup()
 
     def build_term_lookup(self):
-        self.term_lookup = {}
-
         for idx, sentence in self.tokenized_lookup.items():
             for token in sentence:
                 occurrences = self.term_lookup.get(token, list())
