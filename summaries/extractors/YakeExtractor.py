@@ -2,6 +2,7 @@
 Simple extractive baseline using YAKE: https://github.com/LIAAD/yake
 Notably, YAKE is suited well for several languages, but only supports single document texts.
 """
+from typing import List
 
 from yake import KeywordExtractor
 
@@ -18,5 +19,6 @@ class YakeExtractor(Extractor):
 
         self.yake_extractor = KeywordExtractor(self.lang, self.max_ngram_size)
 
-    def extract_keywords(self, text: str):
-        return self.yake_extractor.extract_keywords(text)[:self.num_topics]
+    def extract_keywords(self, text: str) -> List[str]:
+        keywords_with_scores = self.yake_extractor.extract_keywords(text)[:self.num_topics]
+        return [keyword for keyword, _ in keywords_with_scores]
