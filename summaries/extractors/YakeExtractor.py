@@ -18,5 +18,5 @@ class YakeExtractor(Extractor):
 
         self.yake_extractor = KeywordExtractor(self.lang, self.max_ngram_size)
 
-    def extract_keywords(self, text):
+    def extract_keywords(self, text: str):
         return self.yake_extractor.extract_keywords(text)[:self.num_topics]

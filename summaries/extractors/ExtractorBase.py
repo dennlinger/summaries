@@ -12,10 +12,10 @@ class Extractor:
     num_topics: int
     lang: str
 
-    def __init__(self, num_topics, lang):
+    def __init__(self, num_topics: int, lang: str):
         self.topics = []
         self.num_topics = num_topics
         self.lang = interpret_lang_code(lang)
 
-    def extract_keywords(self, text):
+    def extract_keywords(self, text: str):
         raise NotImplementedError("Keyword extraction not implemented!")
