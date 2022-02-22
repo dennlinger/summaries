@@ -52,21 +52,29 @@ class AspectSummarizer:
         else:
             raise NotImplementedError("Retriever component not yet supported!")
 
-    def summarize(self, source_text: Union[str, List[str]]):
+    def summarize(self, source_text: Union[str, List[str]], max_length: int = -1):
         """
         Extractively summarizes documents based on a simple topic-aggregation strategy.
         :param source_text: Document text(s) that should be summarized.
+        :param max_length: Maximum length (in number of sentences) for the target summary.
         :return: Aspect-based summary of the text
         """
         topics = self.extractor.extract_keywords(source_text)
         self.build_index(source_text)
         summary_sentence_ids = []
-        for topic, score in topics:
-            summary_sentence_ids.extend(self.retriever.retrieve(topic, self.index, self.processor))
+        # Set sensible per-topic limit if max_length is specified. Otherwise, .retrieve() will reset to default.
+        if max_length > 0:
+            limit = max_length // len(topics) + 1
+        else:
+            limit = 3
+        for topic in topics:
+            summary_sentence_ids.extend(self.retriever.retrieve(topic, self.index, self.processor, limit=limit))
         # Heuristic to order the chosen sentence in order of occurrence (i.e., our assigned ID)
         summary_sentence_ids = sorted(set(summary_sentence_ids))
         summary_sentences = [self.index.doc_lookup[idx] for idx in summary_sentence_ids]
-        return "\n".join(summary_sentences)
+        if max_length > 0:
+            return "\n".join(summary_sentences)[:max_length]
+        return
 
     def build_index(self, sources: Union[str, List[str]]):
         """
