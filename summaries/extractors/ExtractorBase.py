@@ -17,5 +17,5 @@ class Extractor:
         self.num_topics = num_topics
         self.lang = interpret_lang_code(lang)
 
-    def extract_keywords(self, text: str):
+    def extract_keywords(self, text: str) -> List[str]:
         raise NotImplementedError("Keyword extraction not implemented!")
