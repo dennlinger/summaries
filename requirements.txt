@@ -3,3 +3,5 @@ spacy>=3.0
 matplotlib
 seaborn
 rouge-score
+transformers>=4.15
+sentence-transformers
