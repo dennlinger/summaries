@@ -16,12 +16,16 @@ class FrequencyRetriever(Retriever):
     Simple Retriever model that operates on aggregated (non-normalized) term frequency.
     Not intended for main usage, but easy to debug.
     """
+    processor: Language
 
-    def __init__(self):
-        super(FrequencyRetriever, self).__init__()
+    def __init__(self, processor: Language):
+        super(FrequencyRetriever, self).__init__(processor)
 
-    def retrieve(self, query: str, index: Index, processor: Language, limit: int = 3) -> List[int]:
-        query_tokens = self.split_tokens(query, processor)
+    def retrieve(self, query: str, index: Index, limit: int = 3) -> List[int]:
+        # Handle case from outer call that does not set limit, so reset to default
+        if limit <= 0:
+            raise ValueError("Negative limit set!")
+        query_tokens = self.split_tokens(query)
         occurrences = []
         for token in query_tokens:
             try:
@@ -34,11 +38,10 @@ class FrequencyRetriever(Retriever):
         most_relevant_sentence_ids = [doc_id for doc_id, freq in group_by_doc_id.most_common(limit)]
         return most_relevant_sentence_ids
 
-    @staticmethod
-    def split_tokens(query: str, processor: Language) -> List[str]:
+    def split_tokens(self, query: str) -> List[str]:
         if not query:
             raise ValueError(f"Got empty query!")
-        doc = processor(query)
+        doc = self.processor(query)
         separate_tokens = [token.text for token in doc]
 
         if separate_tokens == []:
