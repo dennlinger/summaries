@@ -7,7 +7,7 @@ from typing import Union, List
 from spacy.language import Language
 
 from .extractors import Extractor, YakeExtractor
-from .retrievers import Retriever, FrequencyRetriever
+from .retrievers import Retriever, FrequencyRetriever, DPRRetriever
 from .index import Index
 from .utils import get_nlp_model
 
@@ -20,11 +20,12 @@ class AspectSummarizer:
     processor: Language
 
     def __init__(self, extractor: Union[str, Extractor] = "yake", retriever: Union[str, Retriever] = "frequency"):
+        # FIXME: Proper loading of model with arguments
+        self.processor = get_nlp_model("sm", disable=tuple("ner"), lang="de")
+
         # TODO: Enable passing of config files with attributes
         self.extractor = self._assign_extractor(extractor)
         self.retriever = self._assign_retriever(retriever)
-        # FIXME: Proper loading of model
-        self.processor = get_nlp_model("sm", disable=tuple("ner"), lang="de")
 
     def _assign_extractor(self, extractor: Union[str, Extractor]) -> Extractor:
         """
@@ -47,8 +48,11 @@ class AspectSummarizer:
         """
         if isinstance(retriever, Retriever):
             return retriever
-        elif retriever == "frequency":
-            return FrequencyRetriever()
+        elif retriever.lower() == "frequency":
+            return FrequencyRetriever(self.processor)
+        elif retriever.lower() == "dpr":
+            return DPRRetriever("deepset/gbert-base-germandpr-question_encoder",
+                                "deepset/gbert-base-germandpr-ctx_encoder")
         else:
             raise NotImplementedError("Retriever component not yet supported!")
 
@@ -68,13 +72,13 @@ class AspectSummarizer:
         else:
             limit = 3
         for topic in topics:
-            summary_sentence_ids.extend(self.retriever.retrieve(topic, self.index, self.processor, limit=limit))
+            summary_sentence_ids.extend(self.retriever.retrieve(topic, self.index, limit=limit))
         # Heuristic to order the chosen sentence in order of occurrence (i.e., our assigned ID)
         summary_sentence_ids = sorted(set(summary_sentence_ids))
         summary_sentences = [self.index.doc_lookup[idx] for idx in summary_sentence_ids]
         if max_length > 0:
             return "\n".join(summary_sentences)[:max_length]
-        return
+        return "\n".join(summary_sentences)
 
     def build_index(self, sources: Union[str, List[str]]):
         """
@@ -91,7 +95,7 @@ class AspectSummarizer:
             #  which might be unwanted.
             raise NotImplementedError("Multi-document summarization currently not supported!")
         sources = self.split_into_sentence_documents(sources)
-        self.index = Index(sources, self.processor)
+        self.index = Index(sources, self.retriever.processor)
 
     def split_into_sentence_documents(self, source_documents: List[str]) -> List[str]:
         sentences = []
