@@ -10,8 +10,6 @@ import torch
 from spacy.language import Language
 from transformers import Pipeline
 
-from ..retrievers import DPRRetriever
-
 
 class Index:
     term_lookup: Dict[str, List[int]]
@@ -58,4 +56,6 @@ class Index:
         # TODO: Allow passing of custom batch sizes or device?
         device = 0 if torch.cuda.is_available() else 1
         batch_size = 32
-        self.encoded_documents = np.array(processor(self.sources, batch_size=batch_size, device=device))
+        # Squeeze necessary because for some reason they have a weird shape.
+        self.encoded_documents = np.squeeze(np.array(processor(self.sources, batch_size=batch_size, device=device)),
+                                            axis=1)
