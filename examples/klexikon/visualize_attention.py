@@ -59,8 +59,8 @@ if __name__ == '__main__':
 
         result = model(input_ids=model_inputs["input_ids"], attention_mask=model_inputs["attention_mask"],
                        decoder_input_ids=decoder_inputs["input_ids"], output_attentions=True,
-                       labels=decoder_inputs["input_ids"])
+                       labels=model_inputs["decoder_input_ids"])
         break
 
-    predicted_ids = torch.argmax(result.logits, dim=-1)
+    predicted_ids = torch.argmax(result.logits.detach.to("cpu"), dim=-1)
     print(tokenizer.decode(predicted_ids[0]))
