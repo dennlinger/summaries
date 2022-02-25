@@ -62,5 +62,5 @@ if __name__ == '__main__':
     result = model(input_ids=model_inputs["input_ids"], attention_mask=model_inputs["attention_mask"],
                    decoder_input_ids=model_inputs["decoder_input_ids"], output_attentions=True,
                    labels=model_inputs["decoder_input_ids"])
-    predicted_ids = torch.argmax(result.logits.detach.to("cpu"), dim=-1)
+    predicted_ids = torch.argmax(result.logits.detach().to("cpu"), dim=-1)
     print(tokenizer.decode(predicted_ids[0]))
