@@ -1,6 +1,7 @@
 """
 Main script to visualize attention on Klexikon articles with mT5.
 """
+import os
 
 import torch
 from tqdm import tqdm
@@ -17,16 +18,18 @@ def prepare_text_input(sentences):
 
 
 if __name__ == '__main__':
+    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
     shortest_article_ids = [260, 1301, 2088, 665, 1572, 436, 1887, 1422, 1506, 474]
 
-    epochs = 100
+    epochs = 500
+    device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
     dataset = load_dataset("dennlinger/klexikon")
     tokenizer = MT5TokenizerFast.from_pretrained("google/mt5-small")
 
     for idx in tqdm(shortest_article_ids):
         # Reload model for each sample to re-start from checkpoint
-        model = MT5ForConditionalGeneration.from_pretrained("google/mt5-small")
+        model = MT5ForConditionalGeneration.from_pretrained("google/mt5-small").to(device)
 
         sample = dataset["train"][idx]
 
@@ -37,6 +40,8 @@ if __name__ == '__main__':
         model_inputs = tokenizer(wiki_text, return_tensors="pt")
         decoder_inputs = tokenizer(klexikon_text, return_tensors="pt")
         model_inputs["decoder_input_ids"] = decoder_inputs["input_ids"]
+
+        model_inputs.to(device)
 
         for _ in tqdm(range(epochs)):
             optimizer = AdamW(model.parameters(), lr=3e-4)
