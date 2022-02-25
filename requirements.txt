@@ -5,3 +5,6 @@ seaborn
 rouge-score
 transformers>=4.15
 sentence-transformers
+torch
+tqdm
+protobuf
