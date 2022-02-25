@@ -21,7 +21,7 @@ if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
     shortest_article_ids = [260, 1301, 2088, 665, 1572, 436, 1887, 1422, 1506, 474]
 
-    epochs = 250
+    epochs = 25
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
     dataset = load_dataset("dennlinger/klexikon")
