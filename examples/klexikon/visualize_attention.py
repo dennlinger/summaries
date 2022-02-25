@@ -48,8 +48,8 @@ if __name__ == '__main__':
             model.train()
 
             result = model(input_ids=model_inputs["input_ids"], attention_mask=model_inputs["attention_mask"],
-                           decoder_input_ids=decoder_inputs["input_ids"], output_attentions=True,
-                           labels=decoder_inputs["input_ids"])
+                           decoder_input_ids=model_inputs["decoder_input_ids"], output_attentions=True,
+                           labels=model_inputs["decoder_input_ids"])
 
             loss = result.loss
             print(loss)
