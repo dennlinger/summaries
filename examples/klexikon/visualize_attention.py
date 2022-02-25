@@ -2,9 +2,10 @@
 Main script to visualize attention on Klexikon articles with mT5.
 """
 
+import torch
 from tqdm import tqdm
 from datasets import load_dataset
-from transformers import MT5TokenizerFast, MT5ForConditionalGeneration, Seq2SeqTrainer, Seq2SeqTrainingArguments
+from transformers import MT5TokenizerFast, MT5ForConditionalGeneration, AdamW
 
 
 def prepare_text_input(sentences):
@@ -18,13 +19,15 @@ def prepare_text_input(sentences):
 if __name__ == '__main__':
     shortest_article_ids = [260, 1301, 2088, 665, 1572, 436, 1887, 1422, 1506, 474]
 
-    epochs = 3
+    epochs = 100
 
     dataset = load_dataset("dennlinger/klexikon")
     tokenizer = MT5TokenizerFast.from_pretrained("google/mt5-small")
-    model = MT5ForConditionalGeneration.from_pretrained("google/mt5-small")
 
     for idx in tqdm(shortest_article_ids):
+        # Reload model for each sample to re-start from checkpoint
+        model = MT5ForConditionalGeneration.from_pretrained("google/mt5-small")
+
         sample = dataset["train"][idx]
 
         # Prepare with sensible border tokens. Decoder needs to start with <pad>
@@ -35,15 +38,24 @@ if __name__ == '__main__':
         decoder_inputs = tokenizer(klexikon_text, return_tensors="pt")
         model_inputs["decoder_input_ids"] = decoder_inputs["input_ids"]
 
-        for _ in range(epochs):
-
-            model.zero_grad()
+        for _ in tqdm(range(epochs)):
+            optimizer = AdamW(model.parameters(), lr=3e-4)
+            model.train()
 
             result = model(input_ids=model_inputs["input_ids"], attention_mask=model_inputs["attention_mask"],
                            decoder_input_ids=decoder_inputs["input_ids"], output_attentions=True,
-                           label=decoder_inputs["input_ids"])
+                           labels=decoder_inputs["input_ids"])
 
-            loss = result["loss"]
+            loss = result.loss
+            print(loss)
             loss.backward()
+            optimizer.step()
+            optimizer.zero_grad()
 
+        result = model(input_ids=model_inputs["input_ids"], attention_mask=model_inputs["attention_mask"],
+                       decoder_input_ids=decoder_inputs["input_ids"], output_attentions=True,
+                       labels=decoder_inputs["input_ids"])
+        break
 
+    predicted_ids = torch.argmax(result.logits, dim=-1)
+    print(tokenizer.decode(predicted_ids[0]))
