@@ -21,7 +21,7 @@ if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
     shortest_article_ids = [260, 1301, 2088, 665, 1572, 436, 1887, 1422, 1506, 474]
 
-    epochs = 250
+    epochs = 250  #250
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
     dataset = load_dataset("dennlinger/klexikon")
@@ -57,8 +57,14 @@ if __name__ == '__main__':
             optimizer.step()
             optimizer.zero_grad()
 
+        model.save_pretrained(f"./{idx}")
         result = model(input_ids=model_inputs["input_ids"], attention_mask=model_inputs["attention_mask"],
                        decoder_input_ids=model_inputs["decoder_input_ids"], output_attentions=True,
                        labels=model_inputs["decoder_input_ids"])
-        predicted_ids = torch.argmax(result.logits.detach().to("cpu"), dim=-1)
-        print(tokenizer.decode(predicted_ids[0]))
+
+        # predicted_ids = torch.argmax(result.logits.detach().to("cpu"), dim=-1)
+        # print(tokenizer.decode(predicted_ids[0]))
+
+        # model_view(cross_attention=result.cross_attentions,
+        #            encoder_tokens=tokenizer.convert_ids_to_tokens(model_inputs["input_ids"][0]),
+        #            decoder_tokens=tokenizer.convert_ids_to_tokens(model_inputs["decoder_input_ids"][0]))
