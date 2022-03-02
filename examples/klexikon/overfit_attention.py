@@ -22,7 +22,7 @@ if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
     shortest_article_ids = [260, 1301, 2088, 665, 1572, 436, 1887, 1422, 1506, 474]
 
-    epochs = 250  # 250 seems to work decently well, maybe even less.
+    epochs = 300  # 250 seems to already work decently well, maybe even less.
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
     dataset = load_dataset("dennlinger/klexikon")
@@ -35,8 +35,8 @@ if __name__ == '__main__':
         sample = dataset["train"][idx]
 
         # Prepare with sensible border tokens. Decoder needs to start with <pad>
-        wiki_text = f"<extra_id_0> {prepare_text_input(sample['wiki_sentences'], max_sentences=15)}"
-        klexikon_text = f"<pad> {prepare_text_input(sample['klexikon_sentences'], max_sentences=5)}"
+        wiki_text = f"<extra_id_0> <extra_id_1> {prepare_text_input(sample['wiki_sentences'], max_sentences=20)}"
+        klexikon_text = f"<pad> <extra_id_1> {prepare_text_input(sample['klexikon_sentences'], max_sentences=10)}"
 
         model_inputs = tokenizer(wiki_text, return_tensors="pt")
         decoder_inputs = tokenizer(klexikon_text, return_tensors="pt")
