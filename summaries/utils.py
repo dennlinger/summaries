@@ -5,7 +5,7 @@ Collection of helper functions.
 from collections import namedtuple, Counter
 from functools import lru_cache
 from operator import attrgetter
-from typing import Tuple, List
+from typing import Tuple, List, Union
 
 from rouge_score.rouge_scorer import _create_ngrams, _score_ngrams
 from spacy.language import Doc
@@ -96,7 +96,7 @@ def find_closest_reference_matches(summary_doc: Doc, reference_doc: Doc) -> List
     return relative_positions
 
 
-def max_rouge_2_match(target_sentence: Span,
+def max_rouge_2_match(target_sentence: Union[Span, Doc],
                       source_sentences: List[str],
                       source_text_ngrams: List[Counter],
                       optimization_attribute: str = "recall") \
