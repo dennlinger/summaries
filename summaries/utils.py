@@ -54,7 +54,7 @@ def get_nlp_model(size: str, disable: Tuple[str] = tuple(), lang: str = "de"):
     return spacy.load(model_identifier, disable=disable)
 
 
-class RelevantSentence(namedtuple("RelevantSentence", ["sentence", "recall", "relative_position"])):
+class RelevantSentence(namedtuple("RelevantSentence", ["sentence", "metric", "relative_position"])):
     """
     Wrapper class for named tuple of results, including recall scores and relative position
     """
@@ -98,15 +98,17 @@ def find_closest_reference_matches(summary_doc: Doc, reference_doc: Doc) -> List
 
 def max_rouge_2_match(target_sentence: Span,
                       source_sentences: List[str],
-                      source_text_ngrams: List[Counter]) \
+                      source_text_ngrams: List[Counter],
+                      optimization_attribute: str = "recall") \
         -> RelevantSentence:
     """
-    Returns the relative position of the closest reference based on maximized ROUGE-2 recall of a single sentence.
+    Returns the relative position of the closest reference based on maximized ROUGE-2 measure of a single sentence.
     Uses the spacy lemmatizer to increase chance of overlaps.
-    Since we're limiting the length to sentences, recall is a decent approximation for overall relation.
+    Since we're limiting the length to sentences, recall is a decent approximation for overall relation,
+    but other attributes can be set, too.
     """
-    if len(target_sentence) <= 3:
-        raise ValueError(f"Sentence splitting likely went wrong! Sentence: {target_sentence.text}")
+    # if len(target_sentence) <= 2:
+    #     raise ValueError(f"Sentence splitting likely went wrong! Sentence: {target_sentence.text}")
 
     # Only need to compute the ngrams of the summary sentence once
     target_ngrams = _create_ngrams([token.lemma_ for token in target_sentence], n=2)
@@ -118,8 +120,8 @@ def max_rouge_2_match(target_sentence: Span,
     for idx, source_ngrams in enumerate(source_text_ngrams):
         score = _score_ngrams(target_ngrams=target_ngrams, prediction_ngrams=source_ngrams)
 
-        if score.recall > max_score:
-            max_score = score.recall
+        if getattr(score, optimization_attribute) > max_score:
+            max_score = getattr(score, optimization_attribute)
             max_index = idx
 
     if max_score < 0 or max_index < 0:
