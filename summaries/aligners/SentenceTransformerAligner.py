@@ -52,7 +52,7 @@ class SentenceTransformerAligner(Aligner):
 
         result_sentences = []
         # Iterating through rows means all similarities for one particular summary sentence
-        for row in cosine_scores.detach().numpy():
+        for row in cosine_scores.detach().cpu().numpy():
 
             # Determine specific values for the most relevant sentence
             # TODO: Maybe we could add a threshold here?
