@@ -3,7 +3,6 @@ Custom project implementing an alignment strategy that overfits a hierarchical e
 which should generate attention weights that are usable for alignments.
 """
 import torch.nn as nn
-import torch
 
 
 class OverfitAligner(nn.Module):
