@@ -89,12 +89,16 @@ class AspectSummarizer:
         """
         if isinstance(sources, str):
             sources = [sources]
+            sources = self.split_into_sentence_documents(sources)
+        if isinstance(sources, list):
+            # Assume that it is already split into sentences
+            pass
         else:
             # TODO: Currently our indexing strategy of assigning a u_id doesn't work with multiple document.
             #  If we want to utilize ordering on the final ids, then this implicitly forces a document order,
             #  which might be unwanted.
             raise NotImplementedError("Multi-document summarization currently not supported!")
-        sources = self.split_into_sentence_documents(sources)
+
         self.index = Index(sources, self.retriever.processor)
 
     def split_into_sentence_documents(self, source_documents: List[str]) -> List[str]:
