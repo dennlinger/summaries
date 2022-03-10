@@ -43,7 +43,7 @@ if __name__ == '__main__':
     yake10 = YakeExtractor(10, max_ngram_size=3)
 
     # First have to compute the document stats
-    input_file = "/home/daumiller/kp20k_training_debug.json"
+    input_file = "/home/daumiller/kp20k_training.json"
     temp_dir = "/home/daumiller/kp20k_training_single_files"
     output_file = "/home/daumiller/kp20k_training_doc_freqs.tsv.gz"
     os.makedirs(temp_dir, exist_ok=True)
