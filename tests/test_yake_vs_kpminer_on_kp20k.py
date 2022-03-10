@@ -20,7 +20,7 @@ def compute_doc_frequencies_for_kp20k(input_file, temp_dir, output_file):
 
     convert_jsonl_into_single_docs(input_file, temp_dir)
     stopwords = get_stopwords("en")
-    compute_document_frequency(input_dir=temp_dir, output_file=output_file, extension=".txt",
+    compute_document_frequency(input_dir=temp_dir, output_file=output_file, extension="txt",
                                language="en", normalization="stemming", stoplist=stopwords)
 
 
@@ -44,7 +44,7 @@ if __name__ == '__main__':
 
     # First have to compute the document stats
     input_file = "/home/daumiller/kp20k_training_debug.json"
-    temp_dir = "/home/daumiller/kp20k_training_single_files/"
+    temp_dir = "/home/daumiller/kp20k_training_single_files"
     output_file = "/home/daumiller/kp20k_training_doc_freqs.tsv.gz"
     os.makedirs(temp_dir, exist_ok=True)
 
