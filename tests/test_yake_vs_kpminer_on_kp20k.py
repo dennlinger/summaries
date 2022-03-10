@@ -19,7 +19,7 @@ def compute_doc_frequencies_for_kp20k(input_file, temp_dir, output_file):
     """
 
     convert_jsonl_into_single_docs(input_file, temp_dir)
-    stopwords = get_stopwords("english")
+    stopwords = get_stopwords("en")
     compute_document_frequency(input_dir=temp_dir, output_file=output_file, extension=".txt",
                                language="en", normalization="stemming", stoplist=stopwords)
 
