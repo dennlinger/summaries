@@ -43,6 +43,7 @@ class DPRRetriever(Retriever):
 
         # Compute similarities
         similarities = dot_score(query_repr, index.encoded_documents).squeeze(dim=0)
+        # Can be sped up for long inputs by using np.argpartition(), although the usage is less intuitive.
         central_indices = np.argsort(similarities)[-limit:]
 
         return central_indices.tolist()
