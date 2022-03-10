@@ -8,3 +8,6 @@ sentence-transformers
 torch
 tqdm
 protobuf
+
+# Used in debugging
+pke<=2.0
