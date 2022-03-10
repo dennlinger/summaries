@@ -8,6 +8,7 @@ import os
 
 from pke.unsupervised.statistical import kpminer
 from pke import compute_document_frequency
+from pke.utils import get_stopwords
 from summaries.extractors import YakeExtractor
 
 
@@ -18,8 +19,9 @@ def compute_doc_frequencies_for_kp20k(input_file, temp_dir, output_file):
     """
 
     convert_jsonl_into_single_docs(input_file, temp_dir)
+    stopwords = get_stopwords("english")
     compute_document_frequency(input_dir=temp_dir, output_file=output_file, extension=".txt",
-                               language="en", normalization="stemming")
+                               language="en", normalization="stemming", stoplist=stopwords)
 
 
 def convert_jsonl_into_single_docs(input_file, output_dir):
@@ -30,7 +32,7 @@ def convert_jsonl_into_single_docs(input_file, output_dir):
         data = json.loads(line)
 
         fn = str(idx).zfill(6) + ".txt"
-        with open(os.path.join(output_dir, fn)):
+        with open(os.path.join(output_dir, fn), "w") as f:
             f.write(data["abstract"])
 
 
