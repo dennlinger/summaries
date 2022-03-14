@@ -3,7 +3,7 @@ A visual analysis tool to understand the distribution of source positionings for
 summarization systems (and data sources).
 """
 
-from typing import List
+from typing import List, Optional
 
 from seaborn import histplot
 import matplotlib.pyplot as plt
@@ -14,33 +14,36 @@ from ..utils import get_nlp_model, find_closest_reference_matches
 
 class DensityPlot:
     processor: Language
+    max_num_bins: int
 
-    def __init__(self):
-        self.processor = get_nlp_model(size="sm", disable=tuple("ner"), lang="de")
+    def __init__(self, max_num_bins: int = 100, processor: Optional[Language] = None):
+        self.max_num_bins = max_num_bins
+        # Load default language model if none was specified
+        if processor:
+            self.processor = processor
+        else:
+            self.processor = get_nlp_model(size="sm", disable=tuple("ner"), lang="de")
 
-    def plot(self, references: List[str], summaries: List[str]) -> None:
+    def plot(self, references: List[List[str]], summaries: List[List[str]]) -> None:
         """
         Generates density plots based on normalized position of reference sentences.
-        :param references: List of reference texts
-        :param summaries: List of summaries; can be either gold or system summaries
+        :param references: List of reference texts, split into sentences.
+        :param summaries: List of summaries; can be either gold or system summaries. Split into sentences.
         :return:
         """
 
         reference_positions = []
         max_article_length = 0
-        for reference, summary in zip(references, summaries):
-
-            reference_doc = self.processor(reference)
-            summary_doc = self.processor(summary)
+        for reference_doc, summary_doc in zip(references, summaries):
 
             # Need maximum length to determine lower bound of bins in histogram
-            if len(list(reference_doc.sents)) > max_article_length:
-                max_article_length = len(list(reference_doc.sents))
+            if len(list(reference_doc)) > max_article_length:
+                max_article_length = len(list(reference_doc))
 
             # Compute likely source-target alignments
-            reference_positions.extend(find_closest_reference_matches(summary_doc, reference_doc))
+            reference_positions.extend(find_closest_reference_matches(summary_doc, reference_doc, self.processor))
 
-        self.generate_plot(reference_positions, min(50, max_article_length))
+        self.generate_plot(reference_positions, min(self.max_num_bins, max_article_length))
 
     @staticmethod
     def generate_plot(positions: List[float], bins):
