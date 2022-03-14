@@ -5,10 +5,10 @@ Collection of helper functions.
 from collections import namedtuple, Counter
 from functools import lru_cache
 from operator import attrgetter
-from typing import Tuple, List, Union
+from typing import Tuple, List, Union, Optional
 
 from rouge_score.rouge_scorer import _create_ngrams, _score_ngrams
-from spacy.language import Doc
+from spacy.language import Doc, Language
 from spacy.tokens import Span
 import spacy
 
@@ -31,7 +31,7 @@ def interpret_lang_code(lang: str) -> str:
 
 
 @lru_cache(maxsize=4)
-def get_nlp_model(size: str, disable: Tuple[str] = tuple(), lang: str = "de"):
+def get_nlp_model(size: str, disable: Tuple[str] = ("ner",), lang: str = "de"):
     """
     Wrapper function to provide cached loading of spacy models.
     Automatically determines the correct model to load based in input arguments
@@ -73,24 +73,43 @@ def print_relevant_sentences(relevant_sentences: List[RelevantSentence], ordered
         print(sent.sentence)
 
 
-def find_closest_reference_matches(summary_doc: Doc, reference_doc: Doc) -> List[float]:
+def find_closest_reference_matches(summary_doc: Union[Doc, List[str]],
+                                   reference_doc: Union[Doc, List[str]],
+                                   processor: Optional[Language] = None) \
+        -> List[float]:
     """
     Aggregate function trying to first find an exact match in a reference document, and otherwise
-    resorting to ROUGE-2 maximization for finding a related sentence.
+    resorting to ROUGE-2 maximization for finding a related sentence. Will either process a list of sentences,
+    or a processed spaCy document.
     """
 
     # Note that the actual position is an *open interval* of [0, 1), because we divide by len(reference_sentences)
     relative_positions = []
 
-    reference_sentences = [sentence.text for sentence in reference_doc.sents]
-    reference_ngrams = [_create_ngrams([token.lemma_ for token in sentence], n=2) for sentence in reference_doc.sents]
-    for summary_sentence in summary_doc.sents:
+    # Determine processing steps based on input
+    if isinstance(summary_doc, Doc):
+        reference_sentences = [sentence.text for sentence in reference_doc.sents]
+        reference_ngrams = [_create_ngrams([token.lemma_ for token in sentence], n=2)
+                            for sentence in reference_doc.sents]
+        summary_sentence_iterator = summary_doc.sents
+    elif isinstance(summary_doc, list):
+        if processor is None:
+            raise ValueError("Unspecified processor! Probably forgot to pass a loaded spaCy model to tokenize!")
+        reference_sentences = reference_doc
+        reference_ngrams = [_create_ngrams([token.lemma_ for token in processor(sentence)], n=2)
+                            for sentence in reference_doc]
+        summary_sentence_iterator = [processor(sentence) for sentence in summary_doc]
+    else:
+        raise ValueError("Unrecognized type of summary document object")
+
+    for summary_sentence in summary_sentence_iterator:
         # Check for exact matches first (extractive summary)
         if summary_sentence.text in reference_sentences:
             relative_positions.append(reference_sentences.index(summary_sentence.text) / len(reference_sentences))
+        # Otherwise determine an approximate match with the highest ROUGE-2 overlap.
         else:
             relative_positions.append(
-                max_rouge_2_match(summary_sentence, reference_sentences, reference_ngrams).relative_position
+                max_rouge_2_match(summary_sentence, reference_sentences, reference_ngrams, "fmeasure").relative_position
             )
 
     return relative_positions
