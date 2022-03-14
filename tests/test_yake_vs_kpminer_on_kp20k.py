@@ -65,7 +65,7 @@ if __name__ == '__main__':
 
     for line in tqdm(lines):
         sample = json.loads(line)
-        gold_keywords = sample["keywords"].split(";")
+        gold_keywords = sample["keyword"].split(";")
 
         predicted_yake = yake10.extract_keywords(sample["abstract"])
 
