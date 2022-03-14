@@ -6,6 +6,7 @@ A pre-tokenized version also exists on Huggingface, but that defeats the purpose
 import json
 import os
 
+from tqdm import tqdm
 from pke.unsupervised.statistical import kpminer
 from pke import compute_document_frequency
 from pke.utils import get_stopwords, load_document_frequency_file
