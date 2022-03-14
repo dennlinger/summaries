@@ -56,7 +56,9 @@ if __name__ == '__main__':
     kp = kpminer.KPMiner()
     df = load_document_frequency_file(input_file=output_file)
 
-    test_file = "/home/daumiller/kp20k_test.json"
+    test_file = "/home/daumiller/kp20k_testing.json"
+
+    results = []
 
     with open(test_file) as f:
         lines = f.readlines()
@@ -72,12 +74,15 @@ if __name__ == '__main__':
             f.write(sample["abstract"])
 
         kp.load_document("temp.txt", language="en", normalization=None)
-        kp.candidate_selection(lasf=2)  # Have lower least frequencly due to short texts
+        kp.candidate_selection(lasf=2)  # Have lower least frequency due to short texts
 
         kp.candidate_weighting(df=df, sigma=3.0, alpha=2.3)
         predicted_kp = kp.get_n_best(10)
 
+        results.append({"yake": predicted_yake, "kp-miner": predicted_kp})
 
+    with open("predictions.json", "w") as f:
+        json.dump(results, f)
 
 
 
