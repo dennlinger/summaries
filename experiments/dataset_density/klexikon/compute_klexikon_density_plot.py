@@ -3,7 +3,6 @@ Similar to examples/density_plot.py, but computes it on the full dataset.
 """
 
 from datasets import load_dataset
-from tqdm import tqdm
 
 from summaries.analysis import DensityPlot
 
