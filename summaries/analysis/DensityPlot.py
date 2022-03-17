@@ -48,6 +48,7 @@ class DensityPlot:
 
     @staticmethod
     def generate_plot(positions: List[float], bins: int, out_fn: Union[None, str]):
+        plt.figure()
         # Simple hack to only plot a KDE if there are "sufficient" samples available.
         if len(positions) > 10:
             plot_kde = True
