@@ -1,13 +1,15 @@
 """
-Similar to examples/density_plot.py, but computes it on the full dataset.
+Similar to examples/density_plot.py, but computes it on the full MLSum (German) dataset.
 """
 
 from datasets import load_dataset
 
+from tqdm import tqdm
 from summaries.analysis import DensityPlot
+from summaries.better_split import better_sentence_split
 
 if __name__ == '__main__':
-    dataset = load_dataset("dennlinger/klexikon")
+    dataset = load_dataset("mlsum", "de")
 
     dp = DensityPlot(max_num_bins=100)
 
@@ -17,9 +19,11 @@ if __name__ == '__main__':
         reference_texts = []
         summary_texts = []
 
-        for sample in partition:
-            reference_texts.append(sample["wiki_sentences"])
-            summary_texts.append(sample["klexikon_sentences"])
+        for sample in tqdm(partition):
+            reference_sentences = better_sentence_split(sample["text"])
+            summary_sentences = better_sentence_split(sample["summary"])
+            reference_texts.append(reference_sentences)
+            summary_texts.append(summary_sentences)
 
         # first_n = 5
         # reference_texts = reference_texts[:first_n]
