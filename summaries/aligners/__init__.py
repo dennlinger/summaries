@@ -1,3 +1,3 @@
-from .Rouge2Aligner import Rouge2Aligner
+from .RougeNAligner import RougeNAligner
 from .OverfitAligner import OverfitAligner
 from .SentenceTransformerAligner import SentenceTransformerAligner
