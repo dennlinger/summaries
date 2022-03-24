@@ -27,6 +27,29 @@ Currently, there are the following options for the respective `Extractor` and `R
 
 Per default, the `AspectSummarizer` will retriever *k* sentences for each of *N* topics. For single document summarization use cases, the resulting list of sentences will be ordered by the original sentence order, and also remove any duplicate sentences (this can occur if a sentence is relevant for several different topics).
 
+### Alignment Strategies
+For the creation of suitable training data (on a sentence level), it may be necessary to create alignments between source and summary texts.
+In this toolkit, we provide several approaches to extract alignments.
+
+#### `RougeNAligner`
+This method follows prior work (TODO: Insert citation) in the creation of alignments, based on ROUGE-2 maximization. There are slight differences, however.
+Whereas prior work uses a greedy algorithm that adds sentences until the metric is saturated, we proceed by adding a 1:1 alignment for each sentence in the summary.
+This has both the advantage of covering a wider range of the source text (for some summary sentences, alignments might appear relatively late in the text), however, at the cost of getting stuck in a local minimum. Furthermore, 1:1 alignments are not the end-all truth, since sentence splitting/merging are also frequent operations, which are not covered with this alignment strategy.
+
+**Usage:**
+```python3
+from summaries.aligners import RougeNAligner
+
+# Use ROUGE-2 optimization, with F1 scores as the maximizing attribute
+aligner = RougeNAligner(n=2, optimization_attribute="fmeasure")
+# Inputs can either be a raw document (string), or pre-split (sentencized) inputs (list of strings). 
+relevant_source_sentences = aligner.extract_source_sentences(summary_text, source_text)
+```
+
+
+#### `SentenceTransformerAligner`
+This method works similar in its strategy to the `RougeNAligner`, but instead uses a `sentence-transformer` model to compute the similarity between source and summary sentences (by default, this is `paraphrase-multilingual-MiniLM-L12-v2`).
+
 
 ## Extending or Supplying Own Components
 
