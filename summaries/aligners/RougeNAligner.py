@@ -3,22 +3,30 @@ Generates a list of relevant sentences in the source text that best align with a
 For this purposes, for each sentence a maximizing fragment (according to ROUGE-2) is chosen from the input text.
 Currently only works for SDS cases (i.e., single reference text).
 """
-from typing import List, Union
+from typing import List
 
-from spacy.language import Language
 from rouge_score.rouge_scorer import _create_ngrams
 
-from ..utils import max_rouge_2_match, RelevantSentence
+from ..utils import max_rouge_n_match, RelevantSentence
 from .AlignerBase import Aligner
 
 
-class Rouge2Aligner(Aligner):
+class RougeNAligner(Aligner):
 
     optimization_attribute: str
+    n: int
 
-    def __init__(self, optimization_attribute: str = "recall"):
-        super(Rouge2Aligner, self).__init__()
+    def __init__(self, n: int = 2, optimization_attribute: str = "recall"):
+        """
+        Initializes a RougeNAligner
+        :param n: N-gram length to consider. Default choice in literature is ROUGE-2, although ROUGE-1 can be used, too.
+        :param optimization_attribute: Either one of "precision", "recall", or "fmeasure"
+        """
+        super(RougeNAligner, self).__init__()
 
+        self.n = n
+        if optimization_attribute not in ["precision", "recall", "fmeasure"]:
+            raise ValueError(f"optimization_attribute must be either of {optimization_attribute}!")
         self.optimization_attribute = optimization_attribute
 
     def _process_string_inputs(self, summary: str, reference: str) -> List[RelevantSentence]:
@@ -29,12 +37,13 @@ class Rouge2Aligner(Aligner):
         summary_doc = self.processor(summary)
         reference_doc = self.processor(reference)
 
-        reference_ngrams = [_create_ngrams([token.lemma_ for token in sentence], n=2)
+        # TODO: Could extend the n-gram creation to actual split words, which would improve for compounds!
+        reference_ngrams = [_create_ngrams([token.lemma_ for token in sentence], n=self.n)
                             for sentence in reference_doc.sents]
         reference_sentences = [sentence.text for sentence in reference_doc.sents]
 
         for sentence in summary_doc.sents:
-            relevant_sentences.append(max_rouge_2_match(sentence,
+            relevant_sentences.append(max_rouge_n_match(sentence,
                                                         reference_sentences,
                                                         reference_ngrams,
                                                         self.optimization_attribute))
@@ -56,7 +65,7 @@ class Rouge2Aligner(Aligner):
         reference_sentences = reference
 
         for sentence in summary_doc:
-            relevant_sentences.append(max_rouge_2_match(sentence,
+            relevant_sentences.append(max_rouge_n_match(sentence,
                                                         reference_sentences,
                                                         reference_ngrams,
                                                         self.optimization_attribute))

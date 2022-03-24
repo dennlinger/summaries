@@ -75,11 +75,12 @@ def print_relevant_sentences(relevant_sentences: List[RelevantSentence], ordered
 
 def find_closest_reference_matches(summary_doc: Union[Doc, List[str]],
                                    reference_doc: Union[Doc, List[str]],
+                                   n: int = 2,
                                    processor: Optional[Language] = None) \
         -> List[float]:
     """
     Aggregate function trying to first find an exact match in a reference document, and otherwise
-    resorting to ROUGE-2 maximization for finding a related sentence. Will either process a list of sentences,
+    resorting to ROUGE-N maximization for finding a related sentence. Will either process a list of sentences,
     or a processed spaCy document.
     """
 
@@ -89,14 +90,14 @@ def find_closest_reference_matches(summary_doc: Union[Doc, List[str]],
     # Determine processing steps based on input
     if isinstance(summary_doc, Doc):
         reference_sentences = [sentence.text for sentence in reference_doc.sents]
-        reference_ngrams = [_create_ngrams([token.lemma_ for token in sentence], n=2)
+        reference_ngrams = [_create_ngrams([token.lemma_ for token in sentence], n=n)
                             for sentence in reference_doc.sents]
         summary_sentence_iterator = summary_doc.sents
     elif isinstance(summary_doc, list):
         if processor is None:
             raise ValueError("Unspecified processor! Probably forgot to pass a loaded spaCy model to tokenize!")
         reference_sentences = reference_doc
-        reference_ngrams = [_create_ngrams([token.lemma_ for token in processor(sentence)], n=2)
+        reference_ngrams = [_create_ngrams([token.lemma_ for token in processor(sentence)], n=n)
                             for sentence in reference_doc]
         summary_sentence_iterator = [processor(sentence) for sentence in summary_doc]
     else:
@@ -109,15 +110,16 @@ def find_closest_reference_matches(summary_doc: Union[Doc, List[str]],
         # Otherwise determine an approximate match with the highest ROUGE-2 overlap.
         else:
             relative_positions.append(
-                max_rouge_2_match(summary_sentence, reference_sentences, reference_ngrams, "fmeasure").relative_position
+                max_rouge_n_match(summary_sentence, reference_sentences, reference_ngrams, "fmeasure").relative_position
             )
 
     return relative_positions
 
 
-def max_rouge_2_match(target_sentence: Union[Span, Doc],
+def max_rouge_n_match(target_sentence: Union[Span, Doc],
                       source_sentences: List[str],
                       source_text_ngrams: List[Counter],
+                      n: int = 2,
                       optimization_attribute: str = "recall") \
         -> RelevantSentence:
     """
@@ -130,7 +132,7 @@ def max_rouge_2_match(target_sentence: Union[Span, Doc],
     #     raise ValueError(f"Sentence splitting likely went wrong! Sentence: {target_sentence.text}")
 
     # Only need to compute the ngrams of the summary sentence once
-    target_ngrams = _create_ngrams([token.lemma_ for token in target_sentence], n=2)
+    target_ngrams = _create_ngrams([token.lemma_ for token in target_sentence], n=n)
 
     max_score = -1
     max_index = -1
