@@ -14,6 +14,7 @@ from .Sentence import Sentence
 class Document:
     text: List[Sentence]
     paragraphs: List[Paragraph]
+    raw_text: str
     text_lang: str
 
     def __init__(self, raw_text: str, determine_paragraphs: bool = False, text_lang: Optional[str] = None,
@@ -24,17 +25,27 @@ class Document:
         :param custom_splitting_fn: Should return a list of Sentences, and a list of Paragraph (if determine_paragraphs
             is set to True).
         """
+
+        self.raw_text = raw_text
+
+        # Automatically determine language of the text, if not provided.
         if not text_lang:
-            self.determine_text_language(raw_text)
+            self.text_lang = determine_text_language(raw_text)
+        else:
+            self.text_lang = text_lang
+
         if custom_splitting_fn:
             self.text, self.paragraphs = custom_splitting_fn(raw_text, determine_paragraphs, self.text_lang)
+        else:
+            self.text, self.paragraphs = sample_splitting_func(raw_text, determine_paragraphs, self.text_lang)
 
-    def determine_text_language(self, text: str) -> str:
-        """
-        Determines a text's language with some package (TBD).
-        """
-        # TODO!
-        return "de"
+
+def determine_text_language(text: str) -> str:
+    """
+    Determines a text's language with some package (TBD).
+    """
+    # TODO: Probably call langid or something
+    return "de"
 
 
 def sample_splitting_func(text: str, determine_paragraphs: bool, lang: str) \
@@ -46,11 +57,14 @@ def sample_splitting_func(text: str, determine_paragraphs: bool, lang: str) \
     nlp = get_nlp_model("sm", lang=lang)
 
     doc = nlp(text)
-    sentences = []
-    paragraphs = []
-
-    curr_paragraph = []
+    # If desired, splits into separate paragraphs.
     if determine_paragraphs:
+
+        sentences = []
+        paragraphs = []
+
+        curr_paragraph = []
+
         for sentence in doc.sents:
             if sentence.text.startswith("=") or not sentence.text.strip("\n "):
                 # Add only if there are sentences/lines in there anyway
@@ -68,7 +82,7 @@ def sample_splitting_func(text: str, determine_paragraphs: bool, lang: str) \
     # Otherwise, just return all sentences that are not empty or headings
     else:
         return [Sentence(sentence) for sentence in doc.sents
-                if not doc.sents.text.startswith("=") and doc.sents.text.strip("\n ")], None
+                if not sentence.text.startswith("=") and sentence.text.strip("\n ")], None
 
 
 

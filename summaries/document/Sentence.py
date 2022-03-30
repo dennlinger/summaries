@@ -2,21 +2,25 @@
 Representation of the smallest considered text unit (sentences),
 containing both raw and processed forms for easier access.
 """
-from typing import Union, List, Optional
+from typing import Union, List, Optional, Dict
 
 from spacy.tokens import Span
+from spacy.language import Doc
 
 
 class Sentence:
     raw: str
     lemmatized: List[str]
     paragraph_id: Optional[int]
+    time_stamps: Dict
 
-    def __init__(self, spacy_processed_text: Union[List[Span], Span], paragraph_id: Optional[int] = None):
+    def __init__(self, spacy_processed_text: Union[List[Span], Span, Doc], paragraph_id: Optional[int] = None):
 
-        # Dummy wrapper to make processing consistent
+        # Differentiate iterator to make processing consistent
         if isinstance(spacy_processed_text, Span):
             spacy_processed_text = [spacy_processed_text]
+        elif isinstance(spacy_processed_text, Doc):
+            spacy_processed_text = spacy_processed_text.sents
 
         # TODO: Determine whether saving the spaCy objects could make sense (e.g., for PoS tags etc.)
         self.raw = " ".join([sent.text for sent in spacy_processed_text])

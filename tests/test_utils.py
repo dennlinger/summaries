@@ -6,7 +6,7 @@ from rouge_score.rouge_scorer import _create_ngrams
 from summaries.utils import find_closest_reference_matches, max_rouge_n_match, RelevantSentence
 
 
-class TestDensityPlot(unittest.TestCase):
+class TestUtils(unittest.TestCase):
     def setUp(self):
         self.processor = spacy.load("de_core_news_sm", disable=("ner",))
 
