@@ -11,19 +11,20 @@ from ..utils import get_nlp_model, RelevantSentence
 class Aligner:
     processor: Language
 
-    def __init__(self):
-        self.processor = get_nlp_model(size="sm", disable=("ner",), lang="de")
+    def __init__(self, lang: str = "de"):
+        self.processor = get_nlp_model(size="sm", disable=("ner",), lang=lang)
 
     def extract_source_sentences(self, summary: Union[List[str], str], reference: Union[List[str], str]) \
             -> List[RelevantSentence]:
         """
+        Will select the closest-matching sentence from `reference` for each sentence in `summary`.
         Note that this only works for a *singular* input/output document pair right now, i.e., MDS is not supported!
         Lists of strings would represent a pre-split sentencized input here.
         :param summary: Either a list of pre-split sentences, or a full text containing the gold summary.
         :param reference: Either a list of pre-split sentences, or a full text containing the reference text,
             from which the matching sentences will be extracted.
-        :return Returns a list of sentences selected from "reference", where the first sentence is the best match
-        for the first target sentence, the second resulting sentence best matches the second gold sentence, etc.
+        :return Returns a list of sentences selected from `reference`, where the first sentence is the best match
+        for the first `summary` sentence, the second resulting sentence best matches the second gold sentence, etc.
         """
         # Differentiate processing based on input type of arguments
         if isinstance(summary, str) and isinstance(reference, list):

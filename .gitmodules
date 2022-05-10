@@ -1,3 +1,6 @@
 [submodule "yake"]
 	path = yake
 	url = https://github.com/LIAAD/yake
+[submodule "python_heideltime"]
+	path = python_heideltime
+	url = git@github.com:PhilipEHausner/python_heideltime.git
