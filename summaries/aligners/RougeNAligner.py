@@ -16,13 +16,14 @@ class RougeNAligner(Aligner):
     optimization_attribute: str
     n: int
 
-    def __init__(self, n: int = 2, optimization_attribute: str = "recall"):
+    def __init__(self, n: int = 2, optimization_attribute: str = "recall", lang: str = "de"):
         """
         Initializes a RougeNAligner
         :param n: N-gram length to consider. Default choice in literature is ROUGE-2, although ROUGE-1 can be used, too.
-        :param optimization_attribute: Either one of "precision", "recall", or "fmeasure"
+        :param optimization_attribute: Either one of "precision", "recall", or "fmeasure" to optimize for.
+        :param lang: Language code for the underlying lemmatizer.
         """
-        super(RougeNAligner, self).__init__()
+        super(RougeNAligner, self).__init__(lang=lang)
 
         self.n = n
         if optimization_attribute not in ["precision", "recall", "fmeasure"]:
@@ -46,6 +47,7 @@ class RougeNAligner(Aligner):
             relevant_sentences.append(max_rouge_n_match(sentence,
                                                         reference_sentences,
                                                         reference_ngrams,
+                                                        self.n,
                                                         self.optimization_attribute))
 
         return relevant_sentences
@@ -68,6 +70,7 @@ class RougeNAligner(Aligner):
             relevant_sentences.append(max_rouge_n_match(sentence,
                                                         reference_sentences,
                                                         reference_ngrams,
+                                                        self.n,
                                                         self.optimization_attribute))
 
         return relevant_sentences
