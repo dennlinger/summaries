@@ -3,6 +3,7 @@ import unittest
 from summaries.aligners import RougeNAligner
 from summaries.utils import RelevantSentence
 
+
 class TestRougeNAligner(unittest.TestCase):
 
     def test_init(self):
