@@ -106,8 +106,10 @@ def find_closest_reference_matches(summary_doc: Union[Doc, List[str]],
     for summary_sentence in summary_sentence_iterator:
         # Check for exact matches first (extractive summary)
         if summary_sentence.text in reference_sentences:
-            relative_positions.append(reference_sentences.index(summary_sentence.text) / len(reference_sentences))
-        # Otherwise determine an approximate match with the highest ROUGE-2 overlap.
+            safe_divisor = max(len(reference_sentences) - 1, 1)
+            relative_position = reference_sentences.index(summary_sentence.text) / safe_divisor
+            relative_positions.append(relative_position)
+        # Otherwise, determine an approximate match with the highest ROUGE-2 overlap.
         else:
             relative_positions.append(
                 max_rouge_n_match(summary_sentence, reference_sentences, reference_ngrams, "fmeasure").relative_position
@@ -148,4 +150,7 @@ def max_rouge_n_match(target_sentence: Union[Span, Doc],
     if max_score < 0 or max_index < 0:
         raise ValueError("No sentence score has been computed!")
     else:
-        return RelevantSentence(source_sentences[max_index], max_score, max_index / len(source_sentences))
+        # Avoid ZeroDivisionError by offsetting by one
+        safe_divisor = max(len(source_sentences) - 1, 1)
+        relative_position = max_index / safe_divisor
+        return RelevantSentence(source_sentences[max_index], max_score, relative_position)
