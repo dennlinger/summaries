@@ -37,11 +37,12 @@ Whereas prior work uses a greedy algorithm that adds sentences until the metric 
 This has both the advantage of covering a wider range of the source text (for some summary sentences, alignments might appear relatively late in the text), however, at the cost of getting stuck in a local minimum. Furthermore, 1:1 alignments are not the end-all truth, since sentence splitting/merging are also frequent operations, which are not covered with this alignment strategy.
 
 **Usage:**
+
 ```python3
-from summaries.aligners import RougeNAligner
+from summaries.aligners import SentenceRougeNAligner
 
 # Use ROUGE-2 optimization, with F1 scores as the maximizing attribute
-aligner = RougeNAligner(n=2, optimization_attribute="fmeasure")
+aligner = SentenceRougeNAligner(n=2, optimization_attribute="fmeasure")
 # Inputs can either be a raw document (string), or pre-split (sentencized) inputs (list of strings). 
 relevant_source_sentences = aligner.extract_source_sentences(summary_text, source_text)
 ```

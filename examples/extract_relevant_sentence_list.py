@@ -2,7 +2,7 @@
 Demonstration of RougeNAligner
 """
 
-from summaries.aligners import RougeNAligner
+from summaries.aligners import SentenceRougeNAligner
 
 
 def load_text_file(fn: str) -> str:
@@ -17,7 +17,7 @@ if __name__ == '__main__':
     reference = load_text_file("./Aachen_Wiki.txt")
     summary = load_text_file("Aachen_Klexikon.txt")
 
-    aligner = RougeNAligner()
+    aligner = SentenceRougeNAligner()
 
     extracted_sentences = aligner.extract_source_sentences(summary=summary, reference=reference)
     summary_doc = aligner.processor(summary)

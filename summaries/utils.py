@@ -130,8 +130,6 @@ def max_rouge_n_match(target_sentence: Union[Span, Doc],
     Since we're limiting the length to sentences, recall is a decent approximation for overall relation,
     but other attributes can be set, too.
     """
-    # if len(target_sentence) <= 2:
-    #     raise ValueError(f"Sentence splitting likely went wrong! Sentence: {target_sentence.text}")
 
     # Only need to compute the ngrams of the summary sentence once
     target_ngrams = _create_ngrams([token.lemma_ for token in target_sentence], n=n)

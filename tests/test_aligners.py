@@ -1,16 +1,16 @@
 import unittest
 
-from summaries.aligners import RougeNAligner
+from summaries.aligners import SentenceRougeNAligner
 from summaries.utils import RelevantSentence
 
 
 class TestRougeNAligner(unittest.TestCase):
 
     def test_init(self):
-        aligner = RougeNAligner(n=2, optimization_attribute="fmeasure")
+        aligner = SentenceRougeNAligner(n=2, optimization_attribute="fmeasure")
 
     def test_extract_source_sentences(self):
-        aligner = RougeNAligner(n=2, optimization_attribute="fmeasure")
+        aligner = SentenceRougeNAligner(n=2, optimization_attribute="fmeasure")
 
         # First test by passing sentencized inputs
         gold = ["This is a test.", "This is another, worse test."]
