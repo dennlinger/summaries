@@ -5,7 +5,7 @@ Currently only works for SDS cases (i.e., single reference text).
 """
 from copy import deepcopy
 from collections import Counter
-from typing import List, Union, Tuple
+from typing import List, Union, Tuple, Set
 
 from rouge_score.rouge_scorer import _create_ngrams, _score_ngrams
 
@@ -100,8 +100,8 @@ class SentenceRougeNAligner(RougeNAligner):
 
 
 class GreedyRougeNAligner(RougeNAligner):
-
-    def __init__(self, n: int = 2, optimization_attribute: str = "recall", lang: str = "de"):
+    # TODO: Implement optimization_attribute as ENUM type?
+    def __init__(self, n: int = 2, optimization_attribute: str = "fmeasure", lang: str = "de"):
         """
         Initializes a GreedyRougeNAligner, which considers the full summary when optimizing the metric.
         :param n: N-gram length to consider. Default choice in literature is ROUGE-2, although ROUGE-1 can be used, too.
@@ -127,12 +127,14 @@ class GreedyRougeNAligner(RougeNAligner):
 
         # Iteratively add new reference sentences until ROUGE scores are saturated
         current_best_ngrams = Counter()
+        previously_added_sentences = set()
         oracle_summary = []
         # Iterate until no further improvement can be found, or we have as many sentences as the reference
         while len(oracle_summary) < len(reference_sentences):
-            best_addition_idx, score_improvement = find_best_extension_sentence(current_best_ngrams,
-                                                                                reference_ngrams,
-                                                                                summary_ngrams)
+            best_addition_idx, improvement_in_score = find_best_extension_sentence(current_best_ngrams,
+                                                                                   reference_ngrams,
+                                                                                   summary_ngrams,
+                                                                                   previously_added_sentences)
             if best_addition_idx is None:
                 break
             else:
@@ -150,12 +152,41 @@ class GreedyRougeNAligner(RougeNAligner):
         Method to process already sentencized inputs. Despite the additionally processed text,
         this method is slightly slower, since obtaining lemmas still requires processing with spacy.
         """
-        return [0]
+        relevant_sentences = []
+
+        # TODO: Could extend the n-gram creation to actual split words, which would improve for compounds!
+        reference_ngrams = [_create_ngrams([token.lemma_ for token in self.processor(sentence)], n=self.n)
+                            for sentence in reference]
+        reference_sentences = [sentence.text for sentence in reference_doc.sents]
+        summary_ngrams = _create_ngrams([token.lemma_ for token in summary_doc], n=self.n)
+
+        # Iteratively add new reference sentences until ROUGE scores are saturated
+        current_best_ngrams = Counter()
+        previously_added_sentences = set()
+        oracle_summary = []
+        # Iterate until no further improvement can be found, or we have as many sentences as the reference
+        while len(oracle_summary) < len(reference_sentences):
+            best_addition_idx, improvement_in_score = find_best_extension_sentence(current_best_ngrams,
+                                                                                   reference_ngrams,
+                                                                                   summary_ngrams,
+                                                                                   previously_added_sentences)
+            if best_addition_idx is None:
+                break
+            else:
+                # Update current hypothesis...
+                current_best_ngrams.update(reference_ngrams[best_addition_idx])
+                # ... and also add sentence to oracle summary
+                oracle_summary.append(RelevantSentence(reference_sentences[best_addition_idx],
+                                                       improvement_in_score,
+                                                       best_addition_idx / safe_divisor(reference_sentences)))
+
+        return relevant_sentences
 
 
 def find_best_extension_sentence(current_best_ngrams: Counter,
                                  reference_sentence_ngrams: List[Counter],
-                                 gold_summary_ngrams: Counter) -> Tuple[Union[int, None], float]:
+                                 gold_summary_ngrams: Counter,
+                                 previously_added_sentences: Set[int]) -> Tuple[Union[int, None], float]:
     """
     Method to identify the sentence (index) that is the best addition to the current oracle summary.
     The matching criteria is maximizing the currently added ROUGE sentence; if no sentence increases ROUGE scores,
@@ -163,6 +194,8 @@ def find_best_extension_sentence(current_best_ngrams: Counter,
     :param current_best_ngrams: Counter of ngrams in the current best hypothesis. Will be used as basis for extension.
     :param reference_sentence_ngrams: Sentence-level Counters containing ngram counts for each sentence.
     :param gold_summary_ngrams: The ngrams contained in the gold summary.
+    :param previously_added_sentences: A set of indices of previously added sentences. Will skip all sentences that
+        are present in this set during the current iteration.
     :return: Index position of the best addition or alternatively None if no improvement is found.
         Also returns the ROUGE improvement of the best addition.
     """
@@ -171,8 +204,11 @@ def find_best_extension_sentence(current_best_ngrams: Counter,
     base_score = _score_ngrams(gold_summary_ngrams, current_best_ngrams)
     max_score = base_score
 
-    # FIXME: Currently would allow adding the same sentence multiple times.
     for idx, sentence_ngrams in enumerate(reference_sentence_ngrams):
+        # Skip sentences that have been previously considered
+        if idx in previously_added_sentences:
+            continue
+
         # Consider the union of our best current approach plus one additional (current) sentence
         hypothesis = deepcopy(current_best_ngrams).update(sentence_ngrams)
         alternative_score = _score_ngrams(gold_summary_ngrams, hypothesis)
