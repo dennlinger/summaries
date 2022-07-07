@@ -31,6 +31,7 @@ class DensityPlot:
         Generates density plots based on normalized position of reference sentences.
         :param references: List of reference texts, split into sentences.
         :param summaries: List of summaries; can be either gold or system summaries. Split into sentences.
+        :param out_fn: File name where to store the plot.
         :return:
         """
 
@@ -43,7 +44,7 @@ class DensityPlot:
                 max_article_length = len(list(reference_doc))
 
             # Compute likely source-target alignments
-            reference_positions.extend(find_closest_reference_matches(summary_doc, reference_doc, self.processor))
+            reference_positions.extend(find_closest_reference_matches(summary_doc, reference_doc, 2, self.processor))
 
         self.generate_plot(reference_positions, min(self.max_num_bins, max_article_length), out_fn)
 
