@@ -112,7 +112,12 @@ def find_closest_reference_matches(summary_doc: Union[Doc, List[str]],
         # Otherwise, determine an approximate match with the highest ROUGE-2 overlap.
         else:
             relative_positions.append(
-                max_rouge_n_match(summary_sentence, reference_sentences, reference_ngrams, "fmeasure").relative_position
+                max_rouge_n_match(summary_sentence,
+                                  reference_sentences,
+                                  reference_ngrams,
+                                  n,
+                                  "fmeasure")
+                .relative_position
             )
 
     return relative_positions
