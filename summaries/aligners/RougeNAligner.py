@@ -114,7 +114,6 @@ class GreedyRougeNAligner(RougeNAligner):
         """
         Method that additionally uses spacy to sentencize content before matching.
         """
-        relevant_sentences = []
         summary_doc = self.processor(summary)
         reference_doc = self.processor(reference)
 
@@ -125,41 +124,29 @@ class GreedyRougeNAligner(RougeNAligner):
 
         summary_ngrams = _create_ngrams([token.lemma_ for token in summary_doc], n=self.n)
 
-        # Iteratively add new reference sentences until ROUGE scores are saturated
-        current_best_ngrams = Counter()
-        previously_added_sentences = set()
-        oracle_summary = []
-        # Iterate until no further improvement can be found, or we have as many sentences as the reference
-        while len(oracle_summary) < len(reference_sentences):
-            best_addition_idx, improvement_in_score = find_best_extension_sentence(current_best_ngrams,
-                                                                                   reference_ngrams,
-                                                                                   summary_ngrams,
-                                                                                   previously_added_sentences)
-            if best_addition_idx is None:
-                break
-            else:
-                # Update current hypothesis...
-                current_best_ngrams.update(reference_ngrams[best_addition_idx])
-                # ... and also add sentence to oracle summary
-                oracle_summary.append(RelevantSentence(reference_sentences[best_addition_idx],
-                                                       improvement_in_score,
-                                                       best_addition_idx / safe_divisor(reference_sentences)))
-
-        return relevant_sentences
+        return self._extract_sentences(summary_ngrams, reference_ngrams, reference_sentences)
 
     def _process_sentencized_inputs(self, summary: List[str], reference: List[str]) -> List[RelevantSentence]:
         """
         Method to process already sentencized inputs. Despite the additionally processed text,
         this method is slightly slower, since obtaining lemmas still requires processing with spacy.
         """
-        relevant_sentences = []
+        summary_doc = [self.processor(sentence) for sentence in summary]
+        reference_doc = [self.processor(sentence) for sentence in reference]
 
         # TODO: Could extend the n-gram creation to actual split words, which would improve for compounds!
-        reference_ngrams = [_create_ngrams([token.lemma_ for token in self.processor(sentence)], n=self.n)
-                            for sentence in reference]
-        reference_sentences = [sentence.text for sentence in reference_doc.sents]
-        summary_ngrams = _create_ngrams([token.lemma_ for token in summary_doc], n=self.n)
+        reference_ngrams = [_create_ngrams([token.lemma_ for token in sentence], n=self.n)
+                            for sentence in reference_doc]
 
+        # Slightly more complex summary ngram generation to preserve sentence boundaries
+        summary_ngrams = Counter()
+        for sentence in summary_doc:
+            summary_ngrams.update(_create_ngrams([token.lemma_ for token in sentence], n=self.n))
+
+        return self._extract_sentences(summary_ngrams, reference_ngrams, reference)
+
+    @staticmethod
+    def _extract_sentences(summary_ngrams, reference_ngrams, reference_sentences) -> List[RelevantSentence]:
         # Iteratively add new reference sentences until ROUGE scores are saturated
         current_best_ngrams = Counter()
         previously_added_sentences = set()
@@ -180,7 +167,7 @@ class GreedyRougeNAligner(RougeNAligner):
                                                        improvement_in_score,
                                                        best_addition_idx / safe_divisor(reference_sentences)))
 
-        return relevant_sentences
+        return oracle_summary
 
 
 def find_best_extension_sentence(current_best_ngrams: Counter,
