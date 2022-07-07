@@ -23,6 +23,7 @@ class DensityPlot:
         if processor:
             self.processor = processor
         else:
+            # TODO: Implement automated processing language
             self.processor = get_nlp_model(size="sm", disable=tuple("ner"), lang="de")
 
     def plot(self, references: List[List[str]], summaries: List[List[str]], out_fn: Optional[str] = None) -> None:
