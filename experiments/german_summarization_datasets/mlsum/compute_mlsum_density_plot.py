@@ -11,7 +11,7 @@ from summaries.better_split import better_sentence_split
 if __name__ == '__main__':
     dataset = load_dataset("mlsum", "de")
 
-    dp = Analyzer(lang="de")
+    analyzer = Analyzer(lang="de")
 
     for partition_name in ["train", "validation", "test"]:
         partition = dataset[partition_name]
@@ -30,5 +30,5 @@ if __name__ == '__main__':
             # if idx >= first_n:
             #     break
 
-        dp.density_plot(reference_texts, summary_texts, out_fn=f"density_{partition_name}.png")
+        analyzer.density_plot(reference_texts, summary_texts, out_fn=f"density_{partition_name}.png")
 
