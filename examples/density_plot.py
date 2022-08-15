@@ -14,5 +14,5 @@ if __name__ == '__main__':
     # Test with single sentence (should be at position 0.89
     # extracted_sentence = "Aufwärts Aachen spielt in der ersten Schachbundesliga."
 
-    plot = Analyzer(lang="de")
-    plot.density_plot([example_reference], [example_summary])
+    analyzer = Analyzer(lang="de")
+    analyzer.density_plot([example_reference], [example_summary])
