@@ -5,13 +5,13 @@ Similar to examples/density_plot.py, but computes it on the full MLSum (German) 
 from datasets import load_dataset
 
 from tqdm import tqdm
-from summaries.analysis import DensityPlot
+from summaries.analysis import Analyzer
 from summaries.better_split import better_sentence_split
 
 if __name__ == '__main__':
     dataset = load_dataset("mlsum", "de")
 
-    dp = DensityPlot(max_num_bins=100)
+    dp = Analyzer(lang="de")
 
     for partition_name in ["train", "validation", "test"]:
         partition = dataset[partition_name]
@@ -30,5 +30,5 @@ if __name__ == '__main__':
             # if idx >= first_n:
             #     break
 
-        dp.plot(reference_texts, summary_texts, out_fn=f"density_{partition_name}.png")
+        dp.density_plot(reference_texts, summary_texts, out_fn=f"density_{partition_name}.png")
 
