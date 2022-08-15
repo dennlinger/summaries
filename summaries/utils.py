@@ -87,6 +87,7 @@ def find_closest_reference_matches(summary_doc: Union[Doc, List[str]],
     # Note that the actual position is an *open interval* of [0, 1), because we divide by len(reference_sentences)
     relative_positions = []
 
+    # TODO: Make lemmatization an optional step, otherwise just use regular token text.
     # Determine processing steps based on input
     if isinstance(summary_doc, Doc):
         reference_sentences = [sentence.text for sentence in reference_doc.sents]
