@@ -4,12 +4,12 @@ Similar to examples/density_plot.py, but computes it on the full dataset.
 
 from datasets import load_dataset
 
-from summaries.analysis import DensityPlot
+from summaries.analysis import Analyzer
 
 if __name__ == '__main__':
     dataset = load_dataset("dennlinger/klexikon")
 
-    dp = DensityPlot(max_num_bins=100)
+    dp = Analyzer(lang="de")
 
     for partition_name in ["train", "validation", "test"]:
         partition = dataset[partition_name]
@@ -25,5 +25,5 @@ if __name__ == '__main__':
         # reference_texts = reference_texts[:first_n]
         # summary_texts = summary_texts[:first_n]
 
-        dp.plot(reference_texts, summary_texts, out_fn=f"density_{partition_name}.png")
+        dp.density_plot(reference_texts, summary_texts, out_fn=f"density_{partition_name}.png")
 
