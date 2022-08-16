@@ -15,7 +15,7 @@ def lead3_baseline(reference_text: Union[List[str], str],
                    processor: Optional[Language] = None,
                    lang: Optional[str] = None) -> str:
     """
-    Baseline method that extractively summarizes an article by taking the first two sentences.
+    Baseline method that extractively summarizes an article by taking the first three sentences.
     :param reference_text: Reference text to be summarized. Can be either of raw reference text (str) or
         pre-split sentences (List[str]).
     :param processor: In the case of raw input text, this is an optional spaCy processor to use for sentence-splitting.
@@ -33,7 +33,7 @@ def leadk_baseline(reference_text: Union[List[str], str],
                    processor: Optional[Language] = None,
                    lang: Optional[str] = None) -> str:
     """
-    Baseline method that extractively summarizes an article by taking the first two sentences.
+    Baseline method that extractively summarizes an article by taking the first k sentences.
     :param reference_text: Reference text to be summarized. Can be either of raw reference text (str) or
         pre-split sentences (List[str]).
     :param k: Number of $k$ first sentences to consider as the summary
@@ -41,7 +41,7 @@ def leadk_baseline(reference_text: Union[List[str], str],
         If not specified, will automatically try and determine a suitable processor based on the `lang` parameter.
     :param lang: If raw input texts are specified and no `processor` is passed, `lang` will be used to determine
         the language of the reference text and load an appropriate spaCy model.
-    :return: Summary text consisting of the first three sentences of the reference text (str).
+    :return: Summary text consisting of the first k sentences of the reference text (str).
     """
 
     if isinstance(reference_text, list):
