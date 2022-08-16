@@ -41,6 +41,7 @@ class Analyzer:
             if lang is None:
                 raise ValueError("Either a language model (`processor`) or a language code (`lang`) must be specified!")
             else:
+                # TODO: Technically a redundant call to interpret_lang_code, since get_nlp_model will check again.
                 lang_code = interpret_lang_code(lang)
                 self.lang_code = lang_code
             self.processor = get_nlp_model("sm", lang=lang_code)
