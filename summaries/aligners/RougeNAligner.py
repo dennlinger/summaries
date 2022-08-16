@@ -7,7 +7,7 @@ from typing import List
 
 from rouge_score.rouge_scorer import _create_ngrams
 
-from ..utils import max_rouge_n_match, RelevantSentence
+from ..utils import max_rouge_n_match, RelevantSentence, valid_optimization_attributes
 from .AlignerBase import Aligner
 
 
@@ -15,20 +15,24 @@ class RougeNAligner(Aligner):
 
     optimization_attribute: str
     n: int
+    lemmatize: bool
 
-    def __init__(self, n: int = 2, optimization_attribute: str = "recall", lang: str = "de"):
+    # TODO: Unify the interface for passing a language processor with the Analyzer (and potentially other classes)
+    def __init__(self, n: int = 2, optimization_attribute: str = "recall", lemmatize: bool = False, lang: str = "de"):
         """
         Initializes a RougeNAligner
         :param n: N-gram length to consider. Default choice in literature is ROUGE-2, although ROUGE-1 can be used, too.
         :param optimization_attribute: Either one of "precision", "recall", or "fmeasure" to optimize for.
-        :param lang: Language code for the underlying lemmatizer.
+        :param lemmatize: Boolean flag indicating whether or not to use lemmas instead of the raw token texts.
+        :param lang: Language code for the underlying tokenizer & optional lemmatizer.
         """
         super(RougeNAligner, self).__init__(lang=lang)
 
         self.n = n
-        if optimization_attribute not in ["precision", "recall", "fmeasure"]:
-            raise ValueError(f"optimization_attribute must be either of {optimization_attribute}!")
+        if optimization_attribute not in valid_optimization_attributes:
+            raise ValueError(f"optimization_attribute must be either of {valid_optimization_attributes}!")
         self.optimization_attribute = optimization_attribute
+        self.lemmatize = lemmatize
 
     def _process_string_inputs(self, summary: str, reference: str) -> List[RelevantSentence]:
         """
@@ -39,8 +43,12 @@ class RougeNAligner(Aligner):
         reference_doc = self.processor(reference)
 
         # TODO: Could extend the n-gram creation to actual split words, which would improve for compounds!
-        reference_ngrams = [_create_ngrams([token.lemma_ for token in sentence], n=self.n)
-                            for sentence in reference_doc.sents]
+        if self.lemmatize:
+            reference_ngrams = [_create_ngrams([token.lemma_ for token in sentence], n=self.n)
+                                for sentence in reference_doc.sents]
+        else:
+            reference_ngrams = [_create_ngrams([token.text for token in sentence], n=self.n)
+                                for sentence in reference_doc.sents]
         reference_sentences = [sentence.text for sentence in reference_doc.sents]
 
         for sentence in summary_doc.sents:
@@ -48,7 +56,8 @@ class RougeNAligner(Aligner):
                                                         reference_sentences,
                                                         reference_ngrams,
                                                         self.n,
-                                                        self.optimization_attribute))
+                                                        self.optimization_attribute,
+                                                        self.lemmatize))
 
         return relevant_sentences
 
@@ -61,8 +70,13 @@ class RougeNAligner(Aligner):
         summary_doc = [self.processor(sentence) for sentence in summary]
         reference_doc = [self.processor(sentence) for sentence in reference]
 
-        reference_ngrams = [_create_ngrams([token.lemma_ for token in sentence], n=2)
-                            for sentence in reference_doc]
+        if self.lemmatize:
+            reference_ngrams = [_create_ngrams([token.lemma_ for token in sentence], n=2)
+                                for sentence in reference_doc]
+        else:
+            reference_ngrams = [_create_ngrams([token.text for token in sentence], n=2)
+                                for sentence in reference_doc]
+
         # This simplifies for already split sentences
         reference_sentences = reference
 
@@ -71,7 +85,8 @@ class RougeNAligner(Aligner):
                                                         reference_sentences,
                                                         reference_ngrams,
                                                         self.n,
-                                                        self.optimization_attribute))
+                                                        self.optimization_attribute,
+                                                        self.lemmatize))
 
         return relevant_sentences
 

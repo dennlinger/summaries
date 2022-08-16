@@ -1,1 +1,1 @@
-from .DensityPlot import DensityPlot
+from .Analyzer import Analyzer
