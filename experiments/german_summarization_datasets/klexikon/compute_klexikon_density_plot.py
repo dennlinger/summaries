@@ -9,7 +9,7 @@ from summaries.analysis import Analyzer
 if __name__ == '__main__':
     dataset = load_dataset("dennlinger/klexikon")
 
-    dp = Analyzer(lang="de")
+    analyzer = Analyzer(lang="de")
 
     for partition_name in ["train", "validation", "test"]:
         partition = dataset[partition_name]
@@ -25,5 +25,5 @@ if __name__ == '__main__':
         # reference_texts = reference_texts[:first_n]
         # summary_texts = summary_texts[:first_n]
 
-        dp.density_plot(reference_texts, summary_texts, out_fn=f"density_{partition_name}.png")
+        analyzer.density_plot(reference_texts, summary_texts, out_fn=f"density_{partition_name}.png")
 
