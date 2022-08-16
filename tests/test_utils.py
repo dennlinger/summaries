@@ -32,7 +32,10 @@ class TestUtils(unittest.TestCase):
         reference_sentences = [sentence.text for sentence in reference_doc.sents]
 
         expected_result = RelevantSentence("Er besteht aus mehreren Tests.", 0.6, 1/2)
-        self.assertEqual(expected_result, max_rouge_n_match(extracted_sentence, reference_sentences, reference_ngrams))
+        self.assertEqual(expected_result, max_rouge_n_match(extracted_sentence,
+                                                            reference_sentences,
+                                                            reference_ngrams,
+                                                            lemmatize=True))
 
 
 if __name__ == '__main__':
