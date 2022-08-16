@@ -86,8 +86,6 @@ class Analyzer:
         Determines the number of repeated ngrams in a particular text (usually applied to generated summaries.
         :param text: Input text that should be analyzed and split.
         :param n: n-gram length which is used to determine repeating n-grams.
-        :param processor: spaCy module which will be used for tokenization.
-        :param lang: As an alternative to a processor, it is sufficient to pass a language code.
         :return: Count of how many repetitions were counted for what n-gram.
         """
 
@@ -108,13 +106,12 @@ class Analyzer:
 
     def lcs_overlap_fraction(self, summary: str, reference: str) -> float:
         """
-        Will compute the fraction of tokens in the generated summary that are shared in a longest common subsequence
-        with the reference text (verbatim copy).
+        Will compute the fraction of tokens in the generated summary that are shared in the longest common subsequence
+        with the reference text. Note that this is quite computationally expensive.
         """
         summary_tokens = self._get_tokens(summary)
         reference_tokens = self._get_tokens(reference)
 
-        # TODO: Verify that this is actually equivalent to the recall, and not precision.
         return _score_lcs(reference_tokens, summary_tokens).precision
 
     def ngram_overlap_fraction(self, summary: str, reference: str, n: int = 2) -> float:
@@ -127,8 +124,13 @@ class Analyzer:
         summary_ngrams = _create_ngrams(summary_tokens, n=n)
         reference_ngrams = _create_ngrams(reference_tokens, n=n)
 
-        # TODO: Verify that this is actually equivalent to the recall, and not precision.
-        return _score_ngrams(reference_ngrams, summary_ngrams).recall
+        return _score_ngrams(reference_ngrams, summary_ngrams).precision
+
+    def novel_ngrams_fraction(self, summary: str, reference: str, n: int = 2) -> float:
+        """
+        Convenience function, returns the inverse (1 - x) of self.ngram_overlap_fraction
+        """
+        return 1 - self.ngram_overlap_fraction(summary=summary, reference=reference, n=n)
 
     @staticmethod
     def is_fully_extractive(summary: str, reference: str) -> bool:
