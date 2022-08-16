@@ -24,6 +24,7 @@ class Sentence:
 
         # TODO: Determine whether saving the spaCy objects could make sense (e.g., for PoS tags etc.)
         self.raw = " ".join([sent.text for sent in spacy_processed_text])
+        # TODO: Set flag to determine whether the flattening is even necessary (lemmatization flag)
         self.lemmatized = self._flatten_lemmata(spacy_processed_text)
 
         self.paragraph_id = paragraph_id

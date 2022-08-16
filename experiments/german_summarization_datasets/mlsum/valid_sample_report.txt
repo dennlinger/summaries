@@ -1,0 +1,19 @@
+Stats for the train partition of the MLSUM dataset:
+A total of 126270 samples were fully extractive (57.16%).
+A total of 40 samples had invalid lengths (0.02%).
+A total of 0 samples had either empty summary or reference texts (0.00%).
+Of those samples, 39 samples had several issues.
+
+
+Stats for the validation partition of the MLSUM dataset:
+A total of 3285 samples were fully extractive (28.83%).
+A total of 0 samples had invalid lengths (0.00%).
+A total of 0 samples had either empty summary or reference texts (0.00%).
+Of those samples, 0 samples had several issues.
+
+
+Stats for the test partition of the MLSUM dataset:
+A total of 3306 samples were fully extractive (30.89%).
+A total of 0 samples had invalid lengths (0.00%).
+A total of 0 samples had either empty summary or reference texts (0.00%).
+Of those samples, 0 samples had several issues.

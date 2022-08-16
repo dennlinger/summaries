@@ -13,6 +13,7 @@ from spacy.tokens import Span
 import spacy
 
 supported_languages = {"en", "de"}
+valid_optimization_attributes = ["precision", "recall", "fmeasure"]
 
 
 def interpret_lang_code(lang: str) -> str:
@@ -76,7 +77,9 @@ def print_relevant_sentences(relevant_sentences: List[RelevantSentence], ordered
 def find_closest_reference_matches(summary_doc: Union[Doc, List[str]],
                                    reference_doc: Union[Doc, List[str]],
                                    n: int = 2,
-                                   processor: Optional[Language] = None) \
+                                   processor: Optional[Language] = None,
+                                   lemmatize: bool = False,
+                                   optimization_attribute: str = "fmeasure") \
         -> List[float]:
     """
     Aggregate function trying to first find an exact match in a reference document, and otherwise
@@ -87,18 +90,30 @@ def find_closest_reference_matches(summary_doc: Union[Doc, List[str]],
     # Note that the actual position is an *open interval* of [0, 1), because we divide by len(reference_sentences)
     relative_positions = []
 
+    if optimization_attribute not in valid_optimization_attributes:
+        raise ValueError(f"Invalid optimization attribute passed. Should be one of {valid_optimization_attributes}")
+
     # Determine processing steps based on input
     if isinstance(summary_doc, Doc):
         reference_sentences = [sentence.text for sentence in reference_doc.sents]
-        reference_ngrams = [_create_ngrams([token.lemma_ for token in sentence], n=n)
-                            for sentence in reference_doc.sents]
+        if lemmatize:
+            reference_ngrams = [_create_ngrams([token.lemma_ for token in sentence], n=n)
+                                for sentence in reference_doc.sents]
+        else:
+            reference_ngrams = [_create_ngrams([token.text for token in sentence], n=n)
+                                for sentence in reference_doc.sents]
         summary_sentence_iterator = summary_doc.sents
     elif isinstance(summary_doc, list):
         if processor is None:
             raise ValueError("Unspecified processor! Probably forgot to pass a loaded spaCy model to tokenize!")
         reference_sentences = reference_doc
-        reference_ngrams = [_create_ngrams([token.lemma_ for token in processor(sentence)], n=n)
-                            for sentence in reference_doc]
+        # since reference_doc is pre-split, no need to iterate over .sents here
+        if lemmatize:
+            reference_ngrams = [_create_ngrams([token.lemma_ for token in processor(sentence)], n=n)
+                                for sentence in reference_doc]
+        else:
+            reference_ngrams = [_create_ngrams([token.text for token in processor(sentence)], n=n)
+                                for sentence in reference_doc]
         summary_sentence_iterator = [processor(sentence) for sentence in summary_doc]
     else:
         raise ValueError("Unrecognized type of summary document object")
@@ -112,7 +127,13 @@ def find_closest_reference_matches(summary_doc: Union[Doc, List[str]],
         # Otherwise, determine an approximate match with the highest ROUGE-2 overlap.
         else:
             relative_positions.append(
-                max_rouge_n_match(summary_sentence, reference_sentences, reference_ngrams, "fmeasure").relative_position
+                max_rouge_n_match(summary_sentence,
+                                  reference_sentences,
+                                  reference_ngrams,
+                                  n,
+                                  optimization_attribute,
+                                  lemmatize)
+                .relative_position
             )
 
     return relative_positions
@@ -122,19 +143,26 @@ def max_rouge_n_match(target_sentence: Union[Span, Doc],
                       source_sentences: List[str],
                       source_text_ngrams: List[Counter],
                       n: int = 2,
-                      optimization_attribute: str = "recall") \
+                      optimization_attribute: str = "recall",
+                      lemmatize: bool = False) \
         -> RelevantSentence:
     """
     Returns the relative position of the closest reference based on maximized ROUGE-2 measure of a single sentence.
     Uses the spacy lemmatizer to increase chance of overlaps.
     Since we're limiting the length to sentences, recall is a decent approximation for overall relation,
-    but other attributes can be set, too.
+    but other attributes can be used as an alternative.
     """
     # if len(target_sentence) <= 2:
     #     raise ValueError(f"Sentence splitting likely went wrong! Sentence: {target_sentence.text}")
 
+    if optimization_attribute not in valid_optimization_attributes:
+        raise ValueError(f"Invalid optimization attribute passed. Should be one of {valid_optimization_attributes}")
+
     # Only need to compute the ngrams of the summary sentence once
-    target_ngrams = _create_ngrams([token.lemma_ for token in target_sentence], n=n)
+    if lemmatize:
+        target_ngrams = _create_ngrams([token.lemma_ for token in target_sentence], n=n)
+    else:
+        target_ngrams = _create_ngrams([token.text for token in target_sentence], n=n)
 
     max_score = -1
     max_index = -1
@@ -143,6 +171,7 @@ def max_rouge_n_match(target_sentence: Union[Span, Doc],
     for idx, source_ngrams in enumerate(source_text_ngrams):
         score = _score_ngrams(target_ngrams=target_ngrams, prediction_ngrams=source_ngrams)
 
+        # Uglier way of accessing named tuples, since we cannot fix the attribute at this time.
         if getattr(score, optimization_attribute) > max_score:
             max_score = getattr(score, optimization_attribute)
             max_index = idx
