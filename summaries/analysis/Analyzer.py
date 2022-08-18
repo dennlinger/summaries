@@ -4,7 +4,7 @@ This can either be done through visual inspection of diversity (Density Plots),
 analyzing the textual coherence of texts (finding repetitions),
 or simply checking for the amount of overlap with a reference text.
 """
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Tuple
 from collections import Counter
 import warnings
 
@@ -244,23 +244,38 @@ class Analyzer:
                              f"{valid_comparison_methods}")
 
         identity_sample_count = 0
-        for sample in train_set:
-            if sample[reference_text_column_name] == sample[summary_text_column_name]:
-                print(f"Found affected training sample with same reference and summary text:")
-                print(f"{sample[:self.print_cutoff_length]}")
-                identity_sample_count += 1
-        for sample in validation_set:
-            if sample[reference_text_column_name] == sample[summary_text_column_name]:
-                print(f"Found affected validation sample with same reference and summary text:")
-                print(f"{sample[:self.print_cutoff_length]}")
-                identity_sample_count += 1
-        for sample in test_set:
-            if sample[reference_text_column_name] == sample[summary_text_column_name]:
-                print(f"Found affected test sample with same reference and summary text:")
-                print(f"{sample[:self.print_cutoff_length]}")
-                identity_sample_count += 1
+
+        passed_splits = self._get_passed_splits_with_names(train_set, validation_set, test_set)
+        # Extra checks are required to avoid NoneType iteration errors.
+        for split, name in passed_splits:
+            for sample in split:
+                if sample[reference_text_column_name] == sample[summary_text_column_name]:
+                    print(f"Found affected {name} sample with same reference and summary text:")
+                    print(f"{sample[:self.print_cutoff_length]}")
+                    identity_sample_count += 1
 
         print(f"Found a total of {identity_sample_count} identity samples.")
+
+    @staticmethod
+    def _get_passed_splits_with_names(train: Union[List, Dataset, None],
+                                      validation: Union[List, Dataset, None],
+                                      test: Union[List, Dataset, None]) -> List[Tuple]:
+        """
+        Utility to aggregate only the splits that were actually passed, i.e., will return all splits that are non-empty.
+        Maintains the general order of train -> validation -> test, and associates them with those names.
+        :return: List of all the present splits in the format (split, split_name)
+        """
+        passed_splits = []
+
+        # TODO: Verify behavior in test cases with empty list inputs, etc.
+        if train:
+            passed_splits.append((train, "train"))
+        if validation:
+            passed_splits.append((validation, "validation"))
+        if test:
+            passed_splits.append((test, "test"))
+
+        return passed_splits
 
     # TODO: See whether it makes sense to enable integer-type columns, in case they are passed as Tuples etc.
     def detect_duplicates(self,
@@ -291,14 +306,10 @@ class Analyzer:
         self.detect_leakage(reference_text_column_name, summary_text_column_name,
                             train_set, validation_set, test_set, comparison_method)
 
-        if train_set:
-            self._detect_intra_leaks(train_set, reference_text_column_name, summary_text_column_name, "train")
-
-        if validation_set:
-            self._detect_intra_leaks(train_set, reference_text_column_name, summary_text_column_name, "validation")
-
-        if test_set:
-            self._detect_intra_leaks(train_set, reference_text_column_name, summary_text_column_name, "test")
+        # Iterate over all the passed splits (and ONLY those)
+        passed_splits = self._get_passed_splits_with_names(train_set, validation_set, test_set)
+        for split, name in passed_splits:
+            self._detect_intra_leaks(split, reference_text_column_name, summary_text_column_name, name)
 
     def _detect_intra_leaks(self, split: Union[List, Dataset],
                             reference_column_name: str,
@@ -365,65 +376,40 @@ class Analyzer:
             raise ValueError(f"Currently only the following comparison methods are supported: "
                              f"{valid_comparison_methods}")
 
+        passed_splits = self._get_passed_splits_with_names(train_set, validation_set, test_set)
         # If only one (or no) split is provided, then no leakage can occur.
-        if bool(train_set) + bool(validation_set) + bool(test_set) < 2:
+        if len(passed_splits) < 2:
             print("No inter-set leaks were detected, since less than two splits were provided.")
             return None
 
         # Since we don't care about intra-set duplicates, this simplifies to set analysis of occurring texts.
-        if train_set:
-            seen_samples_ref_train = set([sample[reference_text_column_name] for sample in train_set])
-            seen_samples_summary_train = set([sample[summary_text_column_name] for sample in train_set])
-        if validation_set:
-            seen_samples_ref_val = set([sample[reference_text_column_name] for sample in validation_set])
-            seen_samples_summary_val = set([sample[summary_text_column_name] for sample in validation_set])
-        if test_set:
-            seen_samples_ref_test = set([sample[reference_text_column_name] for sample in test_set])
-            seen_samples_summary_test = set([sample[summary_text_column_name] for sample in test_set])
+        seen_ref_samples = []
+        seen_summ_samples = []
+
+        for split, name in passed_splits:
+            seen_ref_samples.append(set([sample[reference_text_column_name] for sample in split]))
+            seen_summ_samples.append(set([sample[summary_text_column_name] for sample in train_set]))
 
         # Now simply cross-check which elements occur in both.
-        # TODO: The re-checking of set existence looks a bit cumbersome
         reference_leakage = 0
         summary_leakage = 0
-        if train_set:
-            for ref_text in seen_samples_ref_train:
-                if validation_set:
-                    if ref_text in seen_samples_ref_val:
+        for idx, (_, name) in enumerate(passed_splits):
+            for ref_text in seen_ref_samples[idx]:
+                # Essentially iterate over the other splits and check containment.
+                for other_idx, other_split_ref_texts in enumerate(seen_ref_samples[idx+1:], start=idx+1):
+                    if ref_text in other_split_ref_texts:
                         reference_leakage += 1
-                        print(f"Reference leakage between train and validation set spotted:")
-                        print(f"{ref_text[:self.print_cutoff_length]}")
-                if test_set:
-                    if ref_text in seen_samples_ref_test:
-                        reference_leakage += 1
-                        print(f"Reference leakage between train and test set spotted:")
+                        print(f"Reference leakage between {name} and {passed_splits[other_idx][1]} set spotted:")
                         print(f"{ref_text[:self.print_cutoff_length]}")
 
-            for summ_text in seen_samples_summary_train:
-                if validation_set:
-                    if summ_text in seen_samples_summary_val:
+            # TODO: See if this code duplication can be eliminated!
+            # Do the same, but for the summary texts
+            for summ_text in seen_summ_samples[idx]:
+                for other_idx, other_split_summ_texts in enumerate(seen_summ_samples[idx+1:], start=idx+1):
+                    if summ_text in other_split_summ_texts:
                         summary_leakage += 1
-                        print(f"Reference leakage between train and validation set spotted:")
+                        print(f"Reference leakage between {name} and {passed_splits[other_idx][1]} set spotted:")
                         print(f"{summ_text[:self.print_cutoff_length]}")
-                if test_set:
-                    if summ_text in seen_samples_summary_test:
-                        summary_leakage += 1
-                        print(f"Reference leakage between train and test set spotted:")
-                        print(f"{summ_text[:self.print_cutoff_length]}")
-
-        if validation_set:
-            for ref_text in seen_samples_ref_val:
-                if test_set:
-                    if ref_text in seen_samples_ref_test:
-                        reference_leakage += 1
-                        print(f"Reference leakage between validation and test set spotted:")
-                        print(f"{ref_text[:self.print_cutoff_length]}")
-
-        for summ_text in seen_samples_summary_val:
-            if test_set:
-                if summ_text in seen_samples_summary_test:
-                    summary_leakage += 1
-                    print(f"Reference leakage between validation and test set spotted:")
-                    print(f"{summ_text[:self.print_cutoff_length]}")
 
         print(f"A total of {reference_leakage} reference text leaks and {summary_leakage} summary leaks were found.")
 
