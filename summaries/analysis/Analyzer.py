@@ -11,18 +11,27 @@ import warnings
 from rouge_score.rouge_scorer import _create_ngrams, _score_lcs, _score_ngrams
 from spacy.language import Language
 import matplotlib.pyplot as plt
+from datasets import Dataset
 from seaborn import histplot
 from tqdm import tqdm
 
 from ..utils import get_nlp_model, interpret_lang_code, find_closest_reference_matches
 
 
+valid_comparison_methods = ["exact"]
+
+
 class Analyzer:
     processor: Optional[Language]
     lang_code: Optional[str]
     lemmatize: bool
+    print_cutoff_length: Optional[int]
 
-    def __init__(self, lemmatize: bool = False, processor: Optional[Language] = None, lang: Optional[str] = None):
+    def __init__(self,
+                 lemmatize: bool = False,
+                 processor: Optional[Language] = None,
+                 lang: Optional[str] = None,
+                 print_cutoff_length: Optional[int] = None):
         # Automatically load a model if none is passed.
         if processor is None:
             if lang is None:
@@ -35,6 +44,7 @@ class Analyzer:
             self.processor = processor
 
         self.lemmatize = lemmatize
+        self.print_cutoff_length = print_cutoff_length
 
     def density_plot(self, references: List[List[str]], summaries: List[List[str]], out_fn: Optional[str] = None,
                      max_num_bins: int = 100) -> None:
@@ -206,4 +216,215 @@ class Analyzer:
             return [token.lemma_ for token in self.processor(text)]
         else:
             return [token.text for token in self.processor(text)]
+
+    def find_identity_samples(self,
+                              reference_text_column_name: str,
+                              summary_text_column_name: str,
+                              train_set: Optional[Union[List, Dataset]] = None,
+                              validation_set: Optional[Union[List, Dataset]] = None,
+                              test_set: Optional[Union[List, Dataset]] = None,
+                              comparison_method: str = "exact") -> None:
+        """
+        Function to determine the number of samples where the input and output is the same.
+        This is problematic, since it models
+        :param reference_text_column_name: Name of the column that contains the reference text, for a sample.
+            This assumes that each sample is structured as a Dict.
+        :param summary_text_column_name: Name of the column that contains the summary text.
+        :param train_set: List of samples, or split of Huggingface dataset, containing the training samples.
+            It is assumed that this is the largest split.
+        :param validation_set: List of samples, or split of Huggingface dataset, containing validation samples.
+        :param test_set: List of samples, or split of Huggingface dataset, containing test samples.
+        :param comparison_method: Which method to use to determine similarity. Currently only supports "exact",
+            but future versions could utilize approximate matchers to be more resilient to, e.g., Unicode issues.
+        :return: Nothing is returned, but numbers of affected samples are printed to console.
+        """
+
+        if comparison_method not in valid_comparison_methods:
+            raise ValueError(f"Currently only the following comparison methods are supported: "
+                             f"{valid_comparison_methods}")
+
+        identity_sample_count = 0
+        for sample in train_set:
+            if sample[reference_text_column_name] == sample[summary_text_column_name]:
+                print(f"Found affected training sample with same reference and summary text:")
+                print(f"{sample[:self.print_cutoff_length]}")
+                identity_sample_count += 1
+        for sample in validation_set:
+            if sample[reference_text_column_name] == sample[summary_text_column_name]:
+                print(f"Found affected validation sample with same reference and summary text:")
+                print(f"{sample[:self.print_cutoff_length]}")
+                identity_sample_count += 1
+        for sample in test_set:
+            if sample[reference_text_column_name] == sample[summary_text_column_name]:
+                print(f"Found affected test sample with same reference and summary text:")
+                print(f"{sample[:self.print_cutoff_length]}")
+                identity_sample_count += 1
+
+        print(f"Found a total of {identity_sample_count} identity samples.")
+
+    # TODO: See whether it makes sense to enable integer-type columns, in case they are passed as Tuples etc.
+    def detect_duplicates(self,
+                          reference_text_column_name: str,
+                          summary_text_column_name: str,
+                          train_set: Optional[Union[List, Dataset]] = None,
+                          validation_set: Optional[Union[List, Dataset]] = None,
+                          test_set: Optional[Union[List, Dataset]] = None,
+                          comparison_method: str = "exact") -> None:
+        """
+        Method to spot duplicates in datasets. Depending on the size of datasets passed, this method may consume
+        a significant amount of main memory. Currently, no disk streaming is supported.
+        :param reference_text_column_name: Name of the column that contains the reference text, for a sample.
+            This assumes that each sample is structured as a Dict.
+        :param summary_text_column_name: Name of the column that contains the summary text.
+        :param train_set: List of samples, or split of Huggingface dataset, containing the training samples.
+            It is assumed that this is the largest split.
+        :param validation_set: List of samples, or split of Huggingface dataset, containing validation samples.
+        :param test_set: List of samples, or split of Huggingface dataset, containing test samples.
+        :param comparison_method: Which method to use to determine similarity. Currently only supports "exact",
+            but future versions could utilize approximate matchers to be more resilient to, e.g., Unicode issues.
+        :return: Nothing is returned, but numbers of affected samples are printed to console.
+        """
+        if comparison_method not in valid_comparison_methods:
+            raise ValueError(f"Currently only the following comparison methods are supported: "
+                             f"{valid_comparison_methods}")
+
+        self.detect_leakage(reference_text_column_name, summary_text_column_name,
+                            train_set, validation_set, test_set, comparison_method)
+
+        if train_set:
+            self._detect_intra_leaks(train_set, reference_text_column_name, summary_text_column_name, "train")
+
+        if validation_set:
+            self._detect_intra_leaks(train_set, reference_text_column_name, summary_text_column_name, "validation")
+
+        if test_set:
+            self._detect_intra_leaks(train_set, reference_text_column_name, summary_text_column_name, "test")
+
+    def _detect_intra_leaks(self, split: Union[List, Dataset],
+                            reference_column_name: str,
+                            summary_column_name: str,
+                            split_name: str):
+        seen_samples_ref, seen_samples_summary = self._get_seen_samples_dict(split,
+                                                                             reference_column_name,
+                                                                             summary_column_name)
+
+        for reference_text, occurrences in seen_samples_ref:
+            if len(occurrences) > 1:
+                print(f"The following reference text occurred {len(occurrences)} times in the {split_name} split:")
+                print(f"{reference_text[:self.print_cutoff_length]}")
+
+        for summary_text, occurrences in seen_samples_summary:
+            if len(occurrences) > 1:
+                print(f"The following summary text occurred {len(occurrences)} times in the {split_name} split:")
+                print(f"{summary_text[:self.print_cutoff_length]}")
+
+    def _get_seen_samples_dict(self, dataset: Union[List, Dataset],
+                               reference_column_name: str,
+                               summary_column_name: str):
+        seen_samples_ref = {}
+        seen_samples_summary = {}
+
+        for sample in dataset:
+            seen_samples_ref = self._add_sample(sample, sample[reference_column_name], seen_samples_ref)
+            seen_samples_summary = self._add_sample(sample, sample[summary_column_name], seen_samples_summary)
+
+        return seen_samples_ref, seen_samples_summary
+
+    @staticmethod
+    def _add_sample(sample, sample_text, d):
+        if sample_text in d.keys():
+            d[sample_text].append(sample)
+        else:
+            d[sample_text] = [sample]
+
+        return d
+
+    def detect_leakage(self,
+                       reference_text_column_name: str,
+                       summary_text_column_name: str,
+                       train_set: Optional[Union[List, Dataset]] = None,
+                       validation_set: Optional[Union[List, Dataset]] = None,
+                       test_set: Optional[Union[List, Dataset]] = None,
+                       comparison_method: str = "exact") -> None:
+        """
+        :param reference_text_column_name: Name of the column that contains the reference text, for a sample.
+            This assumes that each sample is structured as a Dict.
+        :param summary_text_column_name: Name of the column that contains the summary text.
+            Similar to `detect_duplicates`, however, only concerned with duplicates *across* different splits.
+            This means it will NOT detect duplicates that occur within the same set (e.g., two same samples in train).
+            Note that this also assumes that all splits have the same naming convention!
+        :param train_set: List of samples, or split of Huggingface dataset, containing the training samples.
+            It is assumed that this is the largest split.
+        :param validation_set: List of samples, or split of Huggingface dataset, containing validation samples.
+        :param test_set: List of samples, or split of Huggingface dataset, containing test samples.
+        :param comparison_method: Which method to use to determine similarity. Currently only supports "exact",
+            but future versions could utilize approximate matchers to be more resilient to, e.g., Unicode issues.
+        :param print_cutoff: Maximum number of chars to print for leaked texts.
+        :return: Number of affected samples is printed to console.
+        """
+        if comparison_method not in valid_comparison_methods:
+            raise ValueError(f"Currently only the following comparison methods are supported: "
+                             f"{valid_comparison_methods}")
+
+        # If only one (or no) split is provided, then no leakage can occur.
+        if bool(train_set) + bool(validation_set) + bool(test_set) < 2:
+            print("No inter-set leaks were detected, since less than two splits were provided.")
+            return None
+
+        # Since we don't care about intra-set duplicates, this simplifies to set analysis of occurring texts.
+        if train_set:
+            seen_samples_ref_train = set([sample[reference_text_column_name] for sample in train_set])
+            seen_samples_summary_train = set([sample[summary_text_column_name] for sample in train_set])
+        if validation_set:
+            seen_samples_ref_val = set([sample[reference_text_column_name] for sample in validation_set])
+            seen_samples_summary_val = set([sample[summary_text_column_name] for sample in validation_set])
+        if test_set:
+            seen_samples_ref_test = set([sample[reference_text_column_name] for sample in test_set])
+            seen_samples_summary_test = set([sample[summary_text_column_name] for sample in test_set])
+
+        # Now simply cross-check which elements occur in both.
+        # TODO: The re-checking of set existence looks a bit cumbersome
+        reference_leakage = 0
+        summary_leakage = 0
+        if train_set:
+            for ref_text in seen_samples_ref_train:
+                if validation_set:
+                    if ref_text in seen_samples_ref_val:
+                        reference_leakage += 1
+                        print(f"Reference leakage between train and validation set spotted:")
+                        print(f"{ref_text[:self.print_cutoff_length]}")
+                if test_set:
+                    if ref_text in seen_samples_ref_test:
+                        reference_leakage += 1
+                        print(f"Reference leakage between train and test set spotted:")
+                        print(f"{ref_text[:self.print_cutoff_length]}")
+
+            for summ_text in seen_samples_summary_train:
+                if validation_set:
+                    if summ_text in seen_samples_summary_val:
+                        summary_leakage += 1
+                        print(f"Reference leakage between train and validation set spotted:")
+                        print(f"{summ_text[:self.print_cutoff_length]}")
+                if test_set:
+                    if summ_text in seen_samples_summary_test:
+                        summary_leakage += 1
+                        print(f"Reference leakage between train and test set spotted:")
+                        print(f"{summ_text[:self.print_cutoff_length]}")
+
+        if validation_set:
+            for ref_text in seen_samples_ref_val:
+                if test_set:
+                    if ref_text in seen_samples_ref_test:
+                        reference_leakage += 1
+                        print(f"Reference leakage between validation and test set spotted:")
+                        print(f"{ref_text[:self.print_cutoff_length]}")
+
+        for summ_text in seen_samples_summary_val:
+            if test_set:
+                if summ_text in seen_samples_summary_test:
+                    summary_leakage += 1
+                    print(f"Reference leakage between validation and test set spotted:")
+                    print(f"{summ_text[:self.print_cutoff_length]}")
+
+        print(f"A total of {reference_leakage} reference text leaks and {summary_leakage} summary leaks were found.")
 
