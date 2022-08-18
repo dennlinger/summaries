@@ -226,7 +226,6 @@ class Analyzer:
                               comparison_method: str = "exact") -> None:
         """
         Function to determine the number of samples where the input and output is the same.
-        This is problematic, since it models
         :param reference_text_column_name: Name of the column that contains the reference text, for a sample.
             This assumes that each sample is structured as a Dict.
         :param summary_text_column_name: Name of the column that contains the summary text.
@@ -238,7 +237,8 @@ class Analyzer:
             but future versions could utilize approximate matchers to be more resilient to, e.g., Unicode issues.
         :return: Nothing is returned, but numbers of affected samples are printed to console.
         """
-
+        # FIXME: This currently will also register samples that are simply two empty strings, which is technically
+        #  already handled by self.is_either_text_empty().
         if comparison_method not in valid_comparison_methods:
             raise ValueError(f"Currently only the following comparison methods are supported: "
                              f"{valid_comparison_methods}")
