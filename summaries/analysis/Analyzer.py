@@ -359,7 +359,6 @@ class Analyzer:
         :param test_set: List of samples, or split of Huggingface dataset, containing test samples.
         :param comparison_method: Which method to use to determine similarity. Currently only supports "exact",
             but future versions could utilize approximate matchers to be more resilient to, e.g., Unicode issues.
-        :param print_cutoff: Maximum number of chars to print for leaked texts.
         :return: Number of affected samples is printed to console.
         """
         if comparison_method not in valid_comparison_methods:
