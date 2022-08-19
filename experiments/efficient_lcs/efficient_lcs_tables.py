@@ -129,14 +129,14 @@ Dort kann man die Stadt aus allen Winkeln überblicken - in allen Farben des Reg
     # lcs = _score_lcs(aarhus_summary, aarhus_reference)
 
     repeats = 100
-    print("Computation of LCS score:")
-    result = timeit.timeit("lcs = _score_lcs(aarhus_summary, aarhus_reference)",
-                           setup="from rouge_score.rouge_scorer import _score_lcs",
-                           number=repeats,
-                           globals=globals())
-
-    print(f"Total execution time: {result:.2f}s")
-    print(f"Execution per loop: {result / repeats :.6f}s")
+    # print("Computation of LCS score:")
+    # result = timeit.timeit("lcs = _score_lcs(aarhus_summary, aarhus_reference)",
+    #                        setup="from rouge_score.rouge_scorer import _score_lcs",
+    #                        number=repeats,
+    #                        globals=globals())
+    #
+    # print(f"Total execution time: {result:.2f}s")
+    # print(f"Execution per loop: {result / repeats :.6f}s")
 
     print("LCS table creation alone:")
     result = timeit.timeit("lcs = _lcs_table(aarhus_summary, aarhus_reference)",
@@ -152,13 +152,19 @@ Dort kann man die Stadt aus allen Winkeln überblicken - in allen Farben des Reg
         """Create 2-d LCS score table."""
         rows = len(ref)
         cols = len(can)
+        ref = np.array(ref)
+        can = np.array(can)
+
         lcs_table = np.zeros([rows + 1, cols + 1], dtype=np.int)
         for i in range(1, rows + 1):
+            direct_updates = ref[i - 1] == can
+            # Update the values taken from the previous
+            lcs_table[i, 1:] = (lcs_table[i-1, 0:] + 1) * direct_updates
             for j in range(1, cols + 1):
-                if ref[i - 1] == can[j - 1]:
-                    lcs_table[i, j] = lcs_table[i - 1, j - 1] + 1
-                else:
-                    lcs_table[i, j] = np.max([lcs_table[i - 1, j], lcs_table[i, j - 1]])
+                # if ref[i - 1] == can[j - 1]:
+                #     lcs_table[i, j] = lcs_table[i - 1, j - 1] + 1
+                if not direct_updates[j - 1]:
+                    lcs_table[i, j] = np.maximum(lcs_table[i - 1, j], lcs_table[i, j - 1])
         return lcs_table
 
     print("Only LCS table, but this time with a numpy matrix:")
