@@ -4,6 +4,8 @@ rouge-score package.
 """
 
 import timeit
+from numba import jit
+import numba
 
 import numpy as np
 import rouge_score
@@ -126,8 +128,6 @@ Auf dem Dach des Museums befindet sich ein Panoramaweg mit bunten Glasfenstern.
 Dort kann man die Stadt aus allen Winkeln überblicken - in allen Farben des Regenbogens.
     """.split(" ")
 
-    # lcs = _score_lcs(aarhus_summary, aarhus_reference)
-
     repeats = 100
     # print("Computation of LCS score:")
     # result = timeit.timeit("lcs = _score_lcs(aarhus_summary, aarhus_reference)",
@@ -139,8 +139,13 @@ Dort kann man die Stadt aus allen Winkeln überblicken - in allen Farben des Reg
     # print(f"Execution per loop: {result / repeats :.6f}s")
 
     print("LCS table creation alone:")
-    result = timeit.timeit("lcs = _lcs_table(aarhus_summary, aarhus_reference)",
-                           setup="from rouge_score.rouge_scorer import _score_lcs",
+    np.random.seed(42)
+    stmt = """
+aarhus_summary2 = aarhus_summary[:np.random.randint(len(aarhus_summary))]
+aarhus_reference2 = aarhus_reference[:np.random.randint(len(aarhus_reference))]
+lcs = _lcs_table(aarhus_summary2, aarhus_reference2)
+"""
+    result = timeit.timeit(stmt,
                            number=repeats,
                            globals=globals())
 
@@ -148,33 +153,40 @@ Dort kann man die Stadt aus allen Winkeln überblicken - in allen Farben des Reg
     print(f"Execution per loop: {result / repeats :.6f}s")
 
 
+    aarhus_reference = numba.typed.List(aarhus_reference)
+    aarhus_summary = numba.typed.List(aarhus_summary)
+
+    @jit(nopython=True)
     def _better_lcs_table(ref, can):
         """Create 2-d LCS score table."""
         rows = len(ref)
         cols = len(can)
-        ref = np.array(ref)
-        can = np.array(can)
-
-        lcs_table = np.zeros([rows + 1, cols + 1], dtype=np.int)
+        lcs_table = np.zeros((rows + 1, cols + 1), dtype=np.int64)
         for i in range(1, rows + 1):
-            direct_updates = ref[i - 1] == can
-            # Update the values taken from the previous
-            lcs_table[i, 1:] = (lcs_table[i-1, 0:] + 1) * direct_updates
             for j in range(1, cols + 1):
-                # if ref[i - 1] == can[j - 1]:
-                #     lcs_table[i, j] = lcs_table[i - 1, j - 1] + 1
-                if not direct_updates[j - 1]:
-                    lcs_table[i, j] = np.maximum(lcs_table[i - 1, j], lcs_table[i, j - 1])
+                if ref[i - 1] == can[j - 1]:
+                    lcs_table[i, j] = lcs_table[i - 1, j - 1] + 1
+                else:
+                    lcs_table[i, j] = max(lcs_table[i - 1, j], lcs_table[i, j - 1])
         return lcs_table
 
+    np.random.seed(42)
+    stmt2 = """
+aarhus_summary2 = aarhus_summary[:np.random.randint(len(aarhus_summary))]
+aarhus_reference2 = aarhus_reference[:np.random.randint(len(aarhus_reference))]
+lcs = _better_lcs_table(aarhus_summary2, aarhus_reference2)
+    """
     print("Only LCS table, but this time with a numpy matrix:")
-    result = timeit.timeit("lcs = _lcs_table(aarhus_summary, aarhus_reference)",
-                           setup="from rouge_score.rouge_scorer import _score_lcs",
+    result = timeit.timeit(stmt2,
                            number=repeats,
                            globals=globals())
 
     print(f"Total execution time: {result:.2f}s")
     print(f"Execution per loop: {result / repeats :.6f}s")
+
+    # lcs = _lcs_table(aarhus_summary, aarhus_reference)
+    lcs2 = _better_lcs_table(aarhus_summary, aarhus_reference)
+    # lcs2 = _better_lcs_table(aarhus_summary, aarhus_reference)
 
     # a = [x for x in range(10000)]
     # b = [x for x in range(10000, 0, -1)]
