@@ -4,7 +4,7 @@ This can either be done through visual inspection of diversity (Density Plots),
 analyzing the textual coherence of texts (finding repetitions),
 or simply checking for the amount of overlap with a reference text.
 """
-from typing import Optional, List, Union, Tuple
+from typing import Optional, List, Union, Tuple, Dict
 from collections import Counter
 import warnings
 
@@ -18,13 +18,11 @@ from tqdm import tqdm
 from ..utils import get_nlp_model, interpret_lang_code, find_closest_reference_matches
 
 
-valid_comparison_methods = ["exact"]
-
-
 class Analyzer:
+    lemmatize: bool
+    valid_comparison_methods: List[str]
     processor: Optional[Language]
     lang_code: Optional[str]
-    lemmatize: bool
     print_cutoff_length: Optional[int]
 
     def __init__(self,
@@ -32,6 +30,11 @@ class Analyzer:
                  processor: Optional[Language] = None,
                  lang: Optional[str] = None,
                  print_cutoff_length: Optional[int] = None):
+        self.lemmatize = lemmatize
+        self.valid_comparison_methods = ["exact"]
+
+        self.print_cutoff_length = print_cutoff_length
+
         # Automatically load a model if none is passed.
         if processor is None:
             if lang is None:
@@ -42,9 +45,6 @@ class Analyzer:
             self.processor = get_nlp_model("sm", lang=lang_code)
         else:
             self.processor = processor
-
-        self.lemmatize = lemmatize
-        self.print_cutoff_length = print_cutoff_length
 
     def density_plot(self, references: List[List[str]], summaries: List[List[str]], out_fn: Optional[str] = None,
                      max_num_bins: int = 100) -> None:
@@ -90,6 +90,59 @@ class Analyzer:
         if out_fn:
             plt.savefig(out_fn, dpi=200)
         plt.show()
+
+    def analyze_dataset(self,
+                        reference_text_column_name: str,
+                        summary_text_column_name: str,
+                        train_set: Optional[Union[List, Dataset]] = None,
+                        validation_set: Optional[Union[List, Dataset]] = None,
+                        test_set: Optional[Union[List, Dataset]] = None,
+                        operations: Optional[List[str]] = None,
+                        comparison_method: str = "exact") -> None:
+        """
+        Function that essentially encapsulates all available analysis methods. Will run whichever methods are specified
+        on all samples, which uses simple matching approach to map supplied arguments.
+        :param reference_text_column_name:
+        :param summary_text_column_name:
+        :param train_set:
+        :param validation_set:
+        :param test_set:
+        :param operations: List of analysis methods to run. If empty, will run the full suit.
+        :param comparison_method:
+        :return:
+        """
+
+        if not (train_set or validation_set or test_set):
+            raise ValueError("No data samples provided (all sets were empty)!")
+
+        # TODO: Check whether the passed operations are all valid!
+        # for operation in operations:
+        #     if operation not in valid_operations:
+        #         raise ValueError(f"Could not identify operation '{operation}'!"
+        #                          f"The only valid operations currently supported are:\n{valid_operations}")
+
+        if "detect duplicates" in operations:
+            self.detect_duplicates(reference_text_column_name, summary_text_column_name, train_set, validation_set,
+                                   test_set, comparison_method)
+        passed_splits = self._get_passed_splits_with_names(train_set, validation_set, test_set)
+        if "identify empty" in operations:
+            total_count = 0
+            for split, name in passed_splits:
+                split_count = 0
+                for sample in split:
+                    if self.is_either_text_empty(sample[summary_text_column_name], sample[reference_text_column_name]):
+                        split_count += 1
+                        total_count += 1
+                        # TODO: Instead we could print out the entire sample, but this would not work with the cutoff
+                        #  length limitation, unless we somehow identify all the sample attributes beforehand!
+                        print(sample[reference_text_column_name][:self.print_cutoff_length])
+                        print(sample[summary_text_column_name][:self.print_cutoff_length])
+                print(f"{split_count} {split} samples have either an empty reference or summary.")
+            print(f"{total_count} samples across all splits had an empty reference or summary.")
+        if "identify identity" in operations:
+            self.find_identity_samples(reference_text_column_name, summary_text_column_name, train_set, validation_set,
+                                       test_set, comparison_method)
+
 
     def count_ngram_repetitions(self, text: str, n: int = 3) -> Counter:
         """
@@ -239,9 +292,9 @@ class Analyzer:
         """
         # FIXME: This currently will also register samples that are simply two empty strings, which is technically
         #  already handled by self.is_either_text_empty().
-        if comparison_method not in valid_comparison_methods:
+        if comparison_method not in self.valid_comparison_methods:
             raise ValueError(f"Currently only the following comparison methods are supported: "
-                             f"{valid_comparison_methods}")
+                             f"{self.valid_comparison_methods}")
 
         identity_sample_count = 0
 
@@ -299,9 +352,9 @@ class Analyzer:
             but future versions could utilize approximate matchers to be more resilient to, e.g., Unicode issues.
         :return: Nothing is returned, but numbers of affected samples are printed to console.
         """
-        if comparison_method not in valid_comparison_methods:
+        if comparison_method not in self.valid_comparison_methods:
             raise ValueError(f"Currently only the following comparison methods are supported: "
-                             f"{valid_comparison_methods}")
+                             f"{self.valid_comparison_methods}")
 
         self.detect_leakage(reference_text_column_name, summary_text_column_name,
                             train_set, validation_set, test_set, comparison_method)
@@ -372,9 +425,9 @@ class Analyzer:
             but future versions could utilize approximate matchers to be more resilient to, e.g., Unicode issues.
         :return: Number of affected samples is printed to console.
         """
-        if comparison_method not in valid_comparison_methods:
+        if comparison_method not in self.valid_comparison_methods:
             raise ValueError(f"Currently only the following comparison methods are supported: "
-                             f"{valid_comparison_methods}")
+                             f"{self.valid_comparison_methods}")
 
         passed_splits = self._get_passed_splits_with_names(train_set, validation_set, test_set)
         # If only one (or no) split is provided, then no leakage can occur.
