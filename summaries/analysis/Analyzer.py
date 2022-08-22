@@ -4,7 +4,7 @@ This can either be done through visual inspection of diversity (Density Plots),
 analyzing the textual coherence of texts (finding repetitions),
 or simply checking for the amount of overlap with a reference text.
 """
-from typing import Optional, List, Union, Tuple, Dict
+from typing import Optional, List, Union, Tuple
 from collections import Counter
 import warnings
 
@@ -32,6 +32,7 @@ class Analyzer:
                  print_cutoff_length: Optional[int] = None):
         self.lemmatize = lemmatize
         self.valid_comparison_methods = ["exact"]
+        self.valid_length_methods = ["char", "whitespace", "token"]
 
         self.print_cutoff_length = print_cutoff_length
 
@@ -111,6 +112,7 @@ class Analyzer:
         :param comparison_method:
         :return:
         """
+        raise NotImplementedError("Currently this function is not fully implementec!")
 
         if not (train_set or validation_set or test_set):
             raise ValueError("No data samples provided (all sets were empty)!")
@@ -124,7 +126,7 @@ class Analyzer:
         if "detect duplicates" in operations:
             self.detect_duplicates(reference_text_column_name, summary_text_column_name, train_set, validation_set,
                                    test_set, comparison_method)
-        passed_splits = self._get_passed_splits_with_names(train_set, validation_set, test_set)
+        passed_splits = self.get_passed_splits_with_names(train_set, validation_set, test_set)
         if "identify empty" in operations:
             total_count = 0
             for split, name in passed_splits:
@@ -142,7 +144,6 @@ class Analyzer:
         if "identify identity" in operations:
             self.find_identity_samples(reference_text_column_name, summary_text_column_name, train_set, validation_set,
                                        test_set, comparison_method)
-
 
     def count_ngram_repetitions(self, text: str, n: int = 3) -> Counter:
         """
@@ -221,10 +222,6 @@ class Analyzer:
         :return: Will return a boolean indicating whether the summary is longer than the reference.
         """
 
-        valid_methods = ["char", "whitespace", "token"]
-        if length_metric not in valid_methods:
-            raise ValueError(f"length_metric should be either of {valid_methods}.")
-
         if length_metric == "char":
             length_summary = len(summary)
             length_reference = len(reference)
@@ -235,9 +232,37 @@ class Analyzer:
             length_summary = len(self._get_tokens(summary))
             length_reference = len(self._get_tokens(reference))
         else:
-            raise ValueError("Unexpected length metric passed!")
+            raise ValueError(f"Unexpected length metric passed! Supported length metrics: {self.valid_length_methods}")
 
         if length_summary >= length_reference:
+            return True
+        else:
+            return False
+
+    def is_text_too_short(self, text: str, min_length: int, length_metric: str = "char") \
+            -> bool:
+        """
+        Checks whether a particular text satisfies simple length requirements. This should be generally checked with
+        different values for references and summaries in the case of summarization datasets.
+        :param text: Input text that should be checked.
+        :param min_length: Minimum length requirement for the text (in the respective units of `length_method`).
+        :param length_metric: Can be either of "char", "whitespace" or "token". The first two are faster approximations,
+            and should generally indicate the same result as the slower "token" method, which uses the processor to
+            tokenize the input text. This is mainly important for texts where there is a high difference expected
+            between "proper" tokenization and approximations.
+        :return: Will return a boolean indicating whether the text is too short or not.
+        """
+
+        if length_metric == "char":
+            text_length = len(text)
+        elif length_metric == "whitespace":
+            text_length = len(text.split(" "))
+        elif length_metric == "token":
+            text_length = len(self._get_tokens(text))
+        else:
+            raise ValueError(f"Unexpected length metric passed! Supported length metrics: {self.valid_length_methods}")
+
+        if text_length >= min_length:
             return True
         else:
             return False
@@ -270,22 +295,11 @@ class Analyzer:
         else:
             return [token.text for token in self.processor(text)]
 
-    def find_identity_samples(self,
-                              reference_text_column_name: str,
-                              summary_text_column_name: str,
-                              train_set: Optional[Union[List, Dataset]] = None,
-                              validation_set: Optional[Union[List, Dataset]] = None,
-                              test_set: Optional[Union[List, Dataset]] = None,
-                              comparison_method: str = "exact") -> None:
+    def is_identity_sample(self, summary_text: str, reference_text: str, comparison_method: str = "exact") -> bool:
         """
-        Function to determine the number of samples where the input and output is the same.
-        :param reference_text_column_name: Name of the column that contains the reference text, for a sample.
-            This assumes that each sample is structured as a Dict.
-        :param summary_text_column_name: Name of the column that contains the summary text.
-        :param train_set: List of samples, or split of Huggingface dataset, containing the training samples.
-            It is assumed that this is the largest split.
-        :param validation_set: List of samples, or split of Huggingface dataset, containing validation samples.
-        :param test_set: List of samples, or split of Huggingface dataset, containing test samples.
+        Function to determine whether the reference and summary texts are the same.
+        :param summary_text: Text of the summary.
+        :param reference_text: Text of the reference article.
         :param comparison_method: Which method to use to determine similarity. Currently only supports "exact",
             but future versions could utilize approximate matchers to be more resilient to, e.g., Unicode issues.
         :return: Nothing is returned, but numbers of affected samples are printed to console.
@@ -296,23 +310,18 @@ class Analyzer:
             raise ValueError(f"Currently only the following comparison methods are supported: "
                              f"{self.valid_comparison_methods}")
 
-        identity_sample_count = 0
-
-        passed_splits = self._get_passed_splits_with_names(train_set, validation_set, test_set)
-        # Extra checks are required to avoid NoneType iteration errors.
-        for split, name in passed_splits:
-            for sample in split:
-                if sample[reference_text_column_name] == sample[summary_text_column_name]:
-                    print(f"Found affected {name} sample with same reference and summary text:")
-                    print(f"{sample[:self.print_cutoff_length]}")
-                    identity_sample_count += 1
-
-        print(f"Found a total of {identity_sample_count} identity samples.")
+        if comparison_method == "exact":
+            if reference_text == summary_text:
+                return True
+            else:
+                return False
+        else:
+            raise ValueError("Unexpected method encountered!")
 
     @staticmethod
-    def _get_passed_splits_with_names(train: Union[List, Dataset, None],
-                                      validation: Union[List, Dataset, None],
-                                      test: Union[List, Dataset, None]) -> List[Tuple]:
+    def get_passed_splits_with_names(train: Union[List, Dataset, None],
+                                     validation: Union[List, Dataset, None],
+                                     test: Union[List, Dataset, None]) -> List[Tuple]:
         """
         Utility to aggregate only the splits that were actually passed, i.e., will return all splits that are non-empty.
         Maintains the general order of train -> validation -> test, and associates them with those names.
@@ -360,7 +369,7 @@ class Analyzer:
                             train_set, validation_set, test_set, comparison_method)
 
         # Iterate over all the passed splits (and ONLY those)
-        passed_splits = self._get_passed_splits_with_names(train_set, validation_set, test_set)
+        passed_splits = self.get_passed_splits_with_names(train_set, validation_set, test_set)
         for split, name in passed_splits:
             self._detect_intra_leaks(split, reference_text_column_name, summary_text_column_name, name)
 
@@ -429,7 +438,7 @@ class Analyzer:
             raise ValueError(f"Currently only the following comparison methods are supported: "
                              f"{self.valid_comparison_methods}")
 
-        passed_splits = self._get_passed_splits_with_names(train_set, validation_set, test_set)
+        passed_splits = self.get_passed_splits_with_names(train_set, validation_set, test_set)
         # If only one (or no) split is provided, then no leakage can occur.
         if len(passed_splits) < 2:
             print("No inter-set leaks were detected, since less than two splits were provided.")
