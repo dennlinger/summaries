@@ -16,7 +16,7 @@ class Cleaner:
     min_length_reference: int
     min_length_summary: int
     length_metric: str
-    ngram_similarity_range: Optional[Tuple[float, float]]
+    ngram_similarity_range: Optional[Union[Tuple[float], List[float]]]
 
     # TODO: Add a parameter to make removal of incompatible length samples
     def __init__(self,
@@ -25,7 +25,7 @@ class Cleaner:
                  min_length_summary: int = 0,
                  min_length_reference: int = 0,
                  length_metric: str = "char",
-                 ngram_similarity_range: Optional[Tuple] = None) -> None:
+                 ngram_similarity_range: Optional[Union[Tuple[float], List[float]]] = None) -> None:
         """
         Initializes a `Cleaner` object with specified parameters.
         :param analyzer: The analyzer defines properties for the analysis, such as the language processing and
