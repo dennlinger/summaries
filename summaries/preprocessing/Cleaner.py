@@ -22,8 +22,8 @@ class Cleaner:
     def __init__(self,
                  analyzer: Optional[Analyzer] = None,
                  deduplication_method: str = "first",
-                 min_length_reference: int = 0,
                  min_length_summary: int = 0,
+                 min_length_reference: int = 0,
                  length_metric: str = "char",
                  ngram_similarity_range: Optional[Tuple] = None) -> None:
         """
@@ -31,8 +31,8 @@ class Cleaner:
         :param analyzer: The analyzer defines properties for the analysis, such as the language processing and
         :param deduplication_method: Currently accepts "first", which will retain the first sample
             with a particular text, and discard other duplicates or leaks, or "none", which will do no filtering.
+        :param min_length_summary: Minimum length of the summary text (see `length_metric`).
         :param min_length_reference: Minimum length of the reference text (see `length_metric`).
-        :param min_length_summary: Minimum length of the summary text (see `length_metric`)
         :param length_metric: Which way to calculate lengths (either one of ["char", "whitespace", "token"]).
         :param ngram_similarity_range: If specified, will restrict all samples to have a minimal/maximal ngram
             similarity between the gold summary and the reference summary.
@@ -68,8 +68,8 @@ class Cleaner:
             self.ngram_similarity_range = None
 
     def clean_dataset(self,
-                      reference_text_column_name: str,
                       summary_text_column_name: str,
+                      reference_text_column_name: str,
                       train_set: Optional[Union[List[Dict], Dataset]] = None,
                       validation_set: Optional[Union[List[Dict], Dataset]] = None,
                       test_set: Optional[Union[List[Dict], Dataset]] = None) -> Tuple:
@@ -79,8 +79,8 @@ class Cleaner:
             - Samples with ngram overlaps that do not fall into the ngram_similarity_range (if specified)
             - Duplicate samples (according to deduplcation_strategy). This will retain one sample for duplications.
               This will also remove duplicates across the different splits, to avoid leakage.
-        :param reference_text_column_name: Key to identify the reference text in a sample.
         :param summary_text_column_name: Key to identify the summary text in a sample.
+        :param reference_text_column_name: Key to identify the reference text in a sample.
         :param train_set: List of dicts, or alternatively Huggingface dataset, representing the training samples.
         :param validation_set: List of dicts, or alternatively Huggingface dataset, representing the validation samples.
         :param test_set: List of dicts, or alternatively Huggingface dataset, representing the test samples.
