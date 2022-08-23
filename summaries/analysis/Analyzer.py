@@ -263,9 +263,9 @@ class Analyzer:
             raise ValueError(f"Unexpected length metric passed! Supported length metrics: {self.valid_length_methods}")
 
         if text_length >= min_length:
-            return True
-        else:
             return False
+        else:
+            return True
 
     @staticmethod
     def is_either_text_empty(summary: str, reference: str) -> bool:
