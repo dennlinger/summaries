@@ -1,0 +1,21 @@
+From running the Cleaner utility with 20 (summ) / 50 (reference) char length minima.
+
+11 samples were removed from the dataset.
+Breakdown by filter category:
+Reason 'too_short': 4 samples removed.
+Reason 'identity_sample': 0 samples removed.
+Reason 'longer_summary': 0 samples removed.
+Reason 'ngram_range': 0 samples removed.
+Reason 'duplicate': 7 samples removed.
+len(clean_klexikon[0])
+Out[3]: 2341
+len(klexikon["train"])
+Out[4]: 2350
+len(clean_klexikon[1])
+Out[5]: 273
+len(klexikon["validation"])
+Out[6]: 274
+len(klexikon["test"])
+Out[7]: 274
+len(clean_klexikon[2])
+Out[8]: 273
