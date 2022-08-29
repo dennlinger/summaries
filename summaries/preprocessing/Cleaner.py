@@ -72,7 +72,7 @@ class Cleaner:
                       reference_text_column_name: str,
                       train_set: Optional[Union[List[Dict], Dataset]] = None,
                       validation_set: Optional[Union[List[Dict], Dataset]] = None,
-                      test_set: Optional[Union[List[Dict], Dataset]] = None) -> Tuple:
+                      test_set: Optional[Union[List[Dict], Dataset]] = None) -> Tuple[List, List, List]:
         """
         Function that removes samples based on the available Analyzer module. By default, removes the following:
             - Samples with incompatible lengths (summary longer than reference)
@@ -96,6 +96,11 @@ class Cleaner:
         previously_seen_references = set()
         previously_seen_summaries = set()
 
+        # TODO: There could be a better way to initialize and track this.
+        #  Could also be extended to account for removal by split?
+        filter_count_with_reason = {"too_short": 0, "identity_sample": 0, "longer_summary": 0,
+                                    "ngram_range": 0, "duplicate": 0}
+
         # Iterate through all available datasets
         for split, name in passed_sets:
             cleaned_splits[name] = []
@@ -111,14 +116,17 @@ class Cleaner:
                    self.analyzer.is_text_too_short(current_summary,
                                                    min_length=self.min_length_summary,
                                                    length_metric=self.length_metric):
+                    filter_count_with_reason["too_short"] += 1
                     continue
                 # Check for differences in input/output per sample
                 if self.analyzer.is_identity_sample(current_summary, current_reference, comparison_method="exact"):
+                    filter_count_with_reason["identity_sample"] += 1
                     continue
                 # TODO: Introduce parameter that determines whether this is a filtering criterion
                 if self.analyzer.is_summary_longer_than_reference(current_summary,
                                                                   current_reference,
                                                                   length_metric=self.length_metric):
+                    filter_count_with_reason["too_short"] += 1
                     continue
                 # If no range for the similarities is specified, no need to check it.
                 if self.ngram_similarity_range is not None:
@@ -126,11 +134,13 @@ class Cleaner:
                     # Check whether the actual similarity is outside the specified range
                     if self.ngram_similarity_range[0] > sample_similarity or \
                        self.ngram_similarity_range[1] < sample_similarity:
+                        filter_count_with_reason["ngram_range"] += 1
                         continue
                 # Deduplication is a bit more tricky, especially once we add more supported methods.
                 if self.deduplication_method == "first":
                     if current_summary in previously_seen_summaries or \
                        current_reference in previously_seen_references:
+                        filter_count_with_reason["duplicate"] += 1
                         continue
                 # TODO: Catch other deduplication methods here
                 else:
@@ -145,6 +155,11 @@ class Cleaner:
                 if self.deduplication_method == "first":
                     previously_seen_summaries.add(current_summary)
                     previously_seen_references.add(current_reference)
+
+        print(f"{sum(filter_count_with_reason.values())} samples were removed from the dataset.")
+        print(f"Breakdown by filter category:")
+        for reason, count in filter_count_with_reason.items():
+            print(f"Reason '{reason}': {count} samples removed.")
 
         # FIXME: Currently "converts" Huggingface dataset inputs to List-based outputs for simplicity of internal
         #  handling, since we otherwise have to differentiate at some point.
