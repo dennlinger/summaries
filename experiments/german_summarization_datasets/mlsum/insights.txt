@@ -1,3 +1,7 @@
+
+
+Output from "compute_valid_samples.py", which is more extensive
+
 Stats for the train partition of the MLSUM dataset:
 A total of 126270 samples were fully extractive (57.16%).
 A total of 40 samples had invalid lengths (0.02%).
