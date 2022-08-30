@@ -68,8 +68,8 @@ class TestCleaner(unittest.TestCase):
         self.assertEqual(0, len(cleaned_test))
 
     def test_fully_extractive_removal(self):
-        ngram_sim_range = [0.0, 0.9]
-        cleaner = Cleaner(ngram_similarity_range=ngram_sim_range, )
+        ngram_sim_range = (0.0, 0.9)
+        cleaner = Cleaner(extractiveness=ngram_sim_range)
 
         # Have to remove the period after the "a", because this is not factored in?
         train_set = [{"reference": "This is a test.", "summary": "This is a"}]
