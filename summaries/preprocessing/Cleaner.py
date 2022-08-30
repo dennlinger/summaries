@@ -131,12 +131,13 @@ class Cleaner:
                 if prev_sample is not None:
                     # Potentially run inspection function supplied by users
                     if callable(print_details):
-                        print_details(current_summary, current_reference, sample,
+                        print_details(current_summary, current_reference, prev_sample,
                                       filter_reason, self.analyzer, split_name)
 
                 # Basically skip at any point we encounter some invalidating property. Only add in the end.
                 current_summary = sample[summary_text_column_name]
                 current_reference = sample[reference_text_column_name]
+                prev_sample = sample
                 filter_reason = None
 
                 # Check for samples to retain minimal length
@@ -213,13 +214,13 @@ class Cleaner:
 
 
 def example_print_details(summary: str, reference: str, full_sample: Dict,
-                          filter_reason: bool, analyzer: Analyzer, split: str) \
+                          filter_reason: str, analyzer: Analyzer, split: str) \
         -> None:
     """
     Example of a print_details function implementation.
-    This will print the reference and summary if the summary is relatively short and starts with a prefix.
+    This will print the reference and summary if the sample has been filtered out for any reason.
     """
-    if len(summary) < 100 and summary.lower().startswith("wo:"):
+    if filter_reason is not None:
         print(reference)
         print(summary)
         print(f"\n\n\n{full_sample}")
