@@ -115,8 +115,8 @@ class Cleaner:
                                     "longer_summary": 0, "extractiveness": 0, "duplicate": 0}
 
         # Iterate through all available datasets
-        for split, name in passed_sets:
-            cleaned_splits[name] = []
+        for split, split_name in passed_sets:
+            cleaned_splits[split_name] = []
 
             # Iteration checks, which are required to maintain logic.
             prev_sample = None
@@ -131,7 +131,8 @@ class Cleaner:
                 if prev_sample is not None:
                     # Potentially run inspection function supplied by users
                     if callable(print_details):
-                        print_details(current_summary, current_reference, sample, filter_reason, self.analyzer)
+                        print_details(current_summary, current_reference, sample,
+                                      filter_reason, self.analyzer, split_name)
 
                 # Basically skip at any point we encounter some invalidating property. Only add in the end.
                 current_summary = sample[summary_text_column_name]
@@ -167,8 +168,8 @@ class Cleaner:
                 # If no range for the similarities is specified, no need to check it.
                 if self.extractiveness is not None:
                     if isinstance(self.extractiveness, tuple):
-                        # curr_similarity = self.analyzer.ngram_overlap_fraction(current_summary, current_reference, n=2)
-                        curr_similarity = self.analyzer.lcs_overlap_fraction(current_summary, current_reference)
+                        # TODO: Let users decide on which overlap function to use?
+                        curr_similarity = self.analyzer.ngram_overlap_fraction(current_summary, current_reference, n=2)
                         # Check whether the actual similarity is outside the specified range
                         if self.extractiveness[0] > curr_similarity or \
                            self.extractiveness[1] < curr_similarity:
@@ -184,14 +185,15 @@ class Cleaner:
                 if self.deduplication_method == "first":
                     if current_summary in previously_seen_summaries or \
                        current_reference in previously_seen_references:
-                        filter_count_with_reason["duplicate"] += 1
+                        filter_reason = "duplicate"
+                        filter_count_with_reason[filter_reason] += 1
                         continue
                 # TODO: Catch other deduplication methods here
                 else:
                     pass
 
                 # If all checks have been "survived", add the sample as it is deemed valid.
-                cleaned_splits[name].append(sample)
+                cleaned_splits[split_name].append(sample)
 
                 # Also retain their checks for deduplication if necessary. This can be only done at this stage,
                 # because it might be the case that we introduce more filters later on, which could conflict with
@@ -210,7 +212,8 @@ class Cleaner:
         return cleaned_splits["train"], cleaned_splits["validation"], cleaned_splits["test"]
 
 
-def example_print_details(summary: str, reference: str, full_sample: Dict, filter_reason: bool, analyzer: Analyzer) \
+def example_print_details(summary: str, reference: str, full_sample: Dict,
+                          filter_reason: bool, analyzer: Analyzer, split: str) \
         -> None:
     """
     Example of a print_details function implementation.
