@@ -71,6 +71,8 @@ class Cleaner:
             elif isinstance(extractiveness, str):
                 if extractiveness == "fully":
                     self.extractiveness = extractiveness
+                else:
+                    raise ValueError(f"Invalid extractiveness option supplied: {extractiveness}")
             else:
                 raise ValueError("Incorrect data type for extractiveness provided. Must be tuple or string.")
         else:
