@@ -77,4 +77,13 @@ class TestCleaner(unittest.TestCase):
 
         self.assertEqual(0, len(cleaned_train_set))
 
+    def test_test_first_deduplication(self):
+        cleaner = Cleaner(deduplication_method="test_first")
+        train_set = [{"reference": "This is a test.", "summary": "Summary text."}]
+        test_set = [{"reference": "This is a test sentence.", "summary": "Summary text."}]
+        cleaned_train, _, cleaned_test = cleaner.clean_dataset("summary", "reference",
+                                                               train_set=train_set, test_set=test_set)
+        self.assertEqual(0, len(cleaned_train))
+        self.assertEqual(1, len(cleaned_test))
+
 
