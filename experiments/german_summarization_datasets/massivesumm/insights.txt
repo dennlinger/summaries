@@ -1,0 +1,7 @@
+126883 samples were removed from the dataset.
+Reason 'reference_too_short': 253 samples removed.
+Reason 'summary_too_short': 16294 samples removed.
+Reason 'identity_sample': 0 samples removed.
+Reason 'longer_summary': 26267 samples removed.
+Reason 'extractiveness': 0 samples removed.
+Reason 'duplicate': 84069 samples removed.
