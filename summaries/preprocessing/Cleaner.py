@@ -46,8 +46,9 @@ class Cleaner:
             self.analyzer = analyzer
         else:
             warnings.warn(f"Falling back to an English Analyzer object that has lemmatization enabled. "
-                          f"If these specifications do not match your expectations, please provide a custom Analyzer "
-                          f"to your Cleaner!")
+                          f"This affects the cleaning if either of the following conditions is met:\n"
+                          f"  * `length_metric` is set to `token`\n"
+                          f"  * `extractiveness` is set to something other than `fully`")
             self.analyzer = Analyzer(lemmatize=True, lang="en")
         self.valid_deduplication_methods = ["first", "none"]
         if deduplication_method not in self.valid_deduplication_methods:
