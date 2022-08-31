@@ -11,6 +11,6 @@ import pandas as pd
 
 if __name__ == '__main__':
 
-    base_path = "../../../../swisstext/"
+    base_path = "/home/dennis/swisstext/"
 
     train_set = pd.read_csv(os.path.join(base_path, "data_train.csv"), delimiter=",").to_dict("records")

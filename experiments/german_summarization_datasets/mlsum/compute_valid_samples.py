@@ -12,8 +12,9 @@ if __name__ == '__main__':
     dataset = load_dataset("mlsum", "de")
 
     analyzer = Analyzer(lang="de")
-    # for partition_name in ["train", "validation", "test"]:
-    for partition_name in ["validation", "test"]:
+    # For faster computation, enable only validation and test set.
+    for partition_name in ["train", "validation", "test"]:
+    # for partition_name in ["validation", "test"]:
         partition = dataset[partition_name]
 
         invalid_lengths = 0
