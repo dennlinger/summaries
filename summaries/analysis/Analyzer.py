@@ -30,6 +30,15 @@ class Analyzer:
                  processor: Optional[Language] = None,
                  lang: Optional[str] = None,
                  print_cutoff_length: Optional[int] = None):
+        """
+        Initializes an Analyzer object.
+        :param lemmatize: Boolean to indicate whether lemmas should be used for token-level functions.
+        :param processor: Language-specific spaCy model. Either this or `lang` has to be specified.
+        :param lang: As an alternative, a language code (e.g., "en" or "de") could be provided, and a spaCy model is
+            loaded based on this information.
+        :param print_cutoff_length: If samples are especially long, it can make sense to limit the number of chars
+            per sample that will be printed out.
+        """
         self.lemmatize = lemmatize
         self.valid_comparison_methods = ["exact"]
         self.valid_length_methods = ["char", "whitespace", "token"]
