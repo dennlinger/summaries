@@ -30,6 +30,15 @@ class Analyzer:
                  processor: Optional[Language] = None,
                  lang: Optional[str] = None,
                  print_cutoff_length: Optional[int] = None):
+        """
+        Initializes an Analyzer object.
+        :param lemmatize: Boolean to indicate whether lemmas should be used for token-level functions.
+        :param processor: Language-specific spaCy model. Either this or `lang` has to be specified.
+        :param lang: As an alternative, a language code (e.g., "en" or "de") could be provided, and a spaCy model is
+            loaded based on this information.
+        :param print_cutoff_length: If samples are especially long, it can make sense to limit the number of chars
+            per sample that will be printed out.
+        """
         self.lemmatize = lemmatize
         self.valid_comparison_methods = ["exact"]
         self.valid_length_methods = ["char", "whitespace", "token"]
@@ -41,6 +50,7 @@ class Analyzer:
             if lang is None:
                 raise ValueError("Either a language model (`processor`) or a language code (`lang`) must be specified!")
             else:
+                # TODO: Technically a redundant call to interpret_lang_code, since get_nlp_model will check again.
                 lang_code = interpret_lang_code(lang)
                 self.lang_code = lang_code
             self.processor = get_nlp_model("sm", lang=lang_code)
