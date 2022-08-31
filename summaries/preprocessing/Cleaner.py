@@ -22,7 +22,7 @@ class Cleaner:
     # TODO: Add a parameter to make removal of incompatible length samples
     def __init__(self,
                  analyzer: Optional[Analyzer] = None,
-                 deduplication_method: str = "first",
+                 deduplication_method: str = "test_first",
                  min_length_summary: int = 0,
                  min_length_reference: int = 0,
                  length_metric: str = "char",
@@ -30,8 +30,10 @@ class Cleaner:
         """
         Initializes a `Cleaner` object with specified parameters.
         :param analyzer: The analyzer defines properties for the analysis, such as the language processing and
-        :param deduplication_method: Currently accepts "first", which will retain the first sample
-            with a particular text, and discard other duplicates or leaks, or "none", which will do no filtering.
+        :param deduplication_method: Currently accepts the following options:
+            * "first", which will retain the first sample with a particular text, and discard other duplicates or leaks,
+            * "test_first", which will reverse the order of passed sets from (train, val, test) to (test, val, train),
+            * "none", which will perform no duplicate filtering.
         :param min_length_summary: Minimum length of the summary text (see `length_metric`).
         :param min_length_reference: Minimum length of the reference text (see `length_metric`).
         :param length_metric: Which way to calculate lengths (either one of ["char", "whitespace", "token"]).
@@ -50,7 +52,7 @@ class Cleaner:
                           f"  * `length_metric` is set to `token`\n"
                           f"  * `extractiveness` is set to something other than `fully`")
             self.analyzer = Analyzer(lemmatize=True, lang="en")
-        self.valid_deduplication_methods = ["first", "none"]
+        self.valid_deduplication_methods = ["first", "test_first", "none"]
         if deduplication_method not in self.valid_deduplication_methods:
             raise ValueError(f"Supplied deduplication method is invalid! "
                              f"Supported deduplication methods: {self.valid_deduplication_methods}")
@@ -85,7 +87,8 @@ class Cleaner:
                       validation_set: Optional[Union[List[Dict], Dataset]] = None,
                       test_set: Optional[Union[List[Dict], Dataset]] = None,
                       print_details: Optional[Callable] = None,
-                      enable_tqdm: bool = False) -> Tuple[List, List, List]:
+                      enable_tqdm: bool = False,
+                      print_breakdown: bool = True) -> Tuple[List, List, List]:
         """
         Function that removes samples based on the available Analyzer module. By default, removes the following:
             - Samples with incompatible lengths (summary longer than reference)
@@ -100,11 +103,16 @@ class Cleaner:
         :param print_details: Optional function that will be called on samples. Could, for example, include a print
             condition to inspect samples that will be filtered on specific criteria.
         :param enable_tqdm: Will show a progress bar if enabled.
+        :param print_breakdown: If enabled, will output a breakdown of where samples were filtered.
         :return: Returns a tuple of (cleaned_train, cleaned_val, cleaned_test),
             where each of those is a list of samples that satisfy all filtering criteria.
         """
 
         passed_sets = self.analyzer.get_passed_splits_with_names(train_set, validation_set, test_set)
+
+        # Ensure correct iteration order for "test first" deduplication
+        if self.deduplication_method == "test_first":
+            passed_sets = reversed(passed_sets)
 
         # Necessary to return all splits in the end, and retain which ones we have seen.
         cleaned_splits = {"train": None, "validation": None, "test": None}
@@ -114,8 +122,12 @@ class Cleaner:
 
         # TODO: There could be a better way to initialize and track this.
         #  Could also be extended to account for removal by split?
-        filter_count_with_reason = {"reference_too_short": 0, "summary_too_short": 0, "identity_sample": 0,
-                                    "longer_summary": 0, "extractiveness": 0, "duplicate": 0}
+        filter_count_with_reason = {"reference_too_short": {"train": 0, "validation": 0, "test": 0},
+                                    "summary_too_short": {"train": 0, "validation": 0, "test": 0},
+                                    "identity_sample": {"train": 0, "validation": 0, "test": 0},
+                                    "longer_summary": {"train": 0, "validation": 0, "test": 0},
+                                    "extractiveness": {"train": 0, "validation": 0, "test": 0},
+                                    "duplicate": {"train": 0, "validation": 0, "test": 0}}
 
         # Iterate through all available datasets
         for split, split_name in passed_sets:
@@ -148,26 +160,26 @@ class Cleaner:
                                                    min_length=self.min_length_reference,
                                                    length_metric=self.length_metric):
                     filter_reason = "reference_too_short"
-                    filter_count_with_reason[filter_reason] += 1
+                    filter_count_with_reason[filter_reason][split_name] += 1
                     continue
 
                 if self.analyzer.is_text_too_short(current_summary,
                                                    min_length=self.min_length_summary,
                                                    length_metric=self.length_metric):
                     filter_reason = "summary_too_short"
-                    filter_count_with_reason[filter_reason] += 1
+                    filter_count_with_reason[filter_reason][split_name] += 1
                     continue
                 # Check for differences in input/output per sample
                 if self.analyzer.is_identity_sample(current_summary, current_reference, comparison_method="exact"):
                     filter_reason = "identity_sample"
-                    filter_count_with_reason[filter_reason] += 1
+                    filter_count_with_reason[filter_reason][split_name] += 1
                     continue
                 # TODO: Introduce parameter that determines whether this is a filtering criterion
                 if self.analyzer.is_summary_longer_than_reference(current_summary,
                                                                   current_reference,
                                                                   length_metric=self.length_metric):
                     filter_reason = "longer_summary"
-                    filter_count_with_reason[filter_reason] += 1
+                    filter_count_with_reason[filter_reason][split_name] += 1
                     continue
                 # If no range for the similarities is specified, no need to check it.
                 if self.extractiveness is not None:
@@ -178,19 +190,19 @@ class Cleaner:
                         if self.extractiveness[0] > curr_similarity or \
                            self.extractiveness[1] < curr_similarity:
                             filter_reason = "extractiveness"
-                            filter_count_with_reason[filter_reason] += 1
+                            filter_count_with_reason[filter_reason][split_name] += 1
                             continue
                     elif self.extractiveness == "fully":
                         if self.analyzer.is_fully_extractive(current_summary, current_reference):
                             filter_reason = "extractiveness"
-                            filter_count_with_reason[filter_reason] += 1
+                            filter_count_with_reason[filter_reason][split_name] += 1
                             continue
                 # Deduplication is a bit more tricky, especially once we add more supported methods.
-                if self.deduplication_method == "first":
+                if self.deduplication_method in ["first", "test_first"]:
                     if current_summary in previously_seen_summaries or \
                        current_reference in previously_seen_references:
                         filter_reason = "duplicate"
-                        filter_count_with_reason[filter_reason] += 1
+                        filter_count_with_reason[filter_reason][split_name] += 1
                         continue
                 # TODO: Catch other deduplication methods here
                 else:
@@ -202,14 +214,16 @@ class Cleaner:
                 # Also retain their checks for deduplication if necessary. This can be only done at this stage,
                 # because it might be the case that we introduce more filters later on, which could conflict with
                 # the current deduplication step.
-                if self.deduplication_method == "first":
+                if self.deduplication_method in ["first", "test_first"]:
                     previously_seen_summaries.add(current_summary)
                     previously_seen_references.add(current_reference)
 
-        print(f"{sum(filter_count_with_reason.values())} samples were removed from the dataset.")
-        print(f"Breakdown by filter category:")
-        for reason, count in filter_count_with_reason.items():
-            print(f"Reason '{reason}': {count} samples removed.")
+        if print_breakdown:
+            total_filtered = sum([sum(reason.values()) for reason in filter_count_with_reason.values()])
+            print(f"{total_filtered} samples were removed from the dataset.")
+            print(f"Breakdown by filter category:")
+            for reason, count in filter_count_with_reason.items():
+                print(f"'{reason}': {count} samples removed across splits.")
 
         # FIXME: Currently "converts" Huggingface dataset inputs to List-based outputs for simplicity of internal
         #  handling, since we otherwise have to differentiate at some point.
