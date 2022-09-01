@@ -20,7 +20,7 @@ For some of the functionalities, there are existing scripts in `examples/` illus
 Often overlooked is a sensible exploratory data analysis and thorough data pre-processing when working in a ML context.
 The `summaries` package provides a number of functionalities surrounding this aspect, with a particular focus on summarization-specific filters and analysis functions.
 
-#### `summaries.analysis.Analyzer`
+#### `summaries.Analyzer`
 
 The main purpose of the `Analyzer` class is to serve a collection of different tools for inspecting datasets both at the level of a singular sample or the entire subset of training/validation/test splits.
 Currently, the `Analyzer` offers the following functionalities:
@@ -38,7 +38,7 @@ Currently, the `Analyzer` offers the following functionalities:
 
 Code example of detecting a faulty summarization sample:
 ```
-from summaries.analysis import Analyzer
+from summaries import Analyzer
 
 analyzer = Analyzer(lemmatize=True, lang="en")
 
@@ -51,10 +51,10 @@ print(analyzer.is_summary_longer_than_reference(summary, reference, length_metri
 ```
 
 
-#### `summaries.preprocessing.Cleaner`
+#### `summaries.Cleaner`
 
 By itself, the `Analyzer` can already be used to streamline exploratory data analysis, however, more frequently the problematic samples should directly be removed from the dataset.
-For this purpose, the library provides `summaries.preprocessing.Cleaner`, which internally uses a number of functionalities from `Analyzer` to remove samples.
+For this purpose, the library provides `summaries.Cleaner`, which internally uses a number of functionalities from `Analyzer` to remove samples.
 In particular, for the main functionality `Cleaner.clean_dataset()`, it takes different splits of a dataset (splits are entirely optional), and will remove samples based on set criteria.
 For inputs, `Cleaner` either accepts a list of `dict`-like data instances, or alternatively splits derived from a Huggingface `datasets.dataset`.
 Additionally, the function will print a distribution of filtered sample by reason for filtering.
@@ -77,8 +77,7 @@ Duplications are expressed as four different types:
 Code example of filtering a Huggingface dataset:
 ```
 from datasets import load_dataset
-from summaries.analysis import Analyzer
-from summaries.preprocessing import Cleaner
+from summaries import Analyzer, Cleaner
 
 analyzer = Analyzer(lemmatize=True, lang="de")
 cleaner = Cleaner(analyzer, min_length_summary=20, length_metric="char", extractiveness="fully")
