@@ -6,7 +6,7 @@ Heidelberg University
 ## Installation
 During development you can install this framework by following the steps below:
 
-1. Clone this github repository: `git clone https://github.com/dennlinger/aspect-summaries.git`
+1. Clone this github repository: `git clone https://github.com/dennlinger/summaries.git`
 2. Navigate to the repository folder, and install all necessary dependencies: `python3 -m pip install -r requirements`
 3. Set up the library with `python3 -m pip install .`. If you want an automatically updated development version, you can also add `-e` to the command.
 
