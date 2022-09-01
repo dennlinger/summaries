@@ -1,4 +1,4 @@
-# `aspect-summaries`: A Collection of Tools for the Summarization Ecosystem
+# `summaries`: A Toolkit for the Summarization Ecosystem
 
 Author: Dennis Aumiller  
 Heidelberg University
@@ -67,6 +67,12 @@ Currently, the following filters are applied:
 - Samples where the summary is longer than the reference (based on the specified `length_metric`) will be removed.
 - If the `extractiveness` parameter is specified, will remove samples that do not satisfy the `extractiveness` criterion. Primarily accepts a `Tuple[float, float]`, which specifies a range in the interval $[0.0, 1.0]$, giving upper and lower bounds for the $n$-gram overlap between reference and summary texts. If a sample does not fall within the range, it will be discarded. Alternatively, also takes `fully` as an accepted parameter, which will filter out only those samples where the summary is *fully extractive* (see above description in the `Analyzer` section).
 - Additionally, `Cleaner` will filter out duplicate samples, if the deduplication method is set to something other than `none`. For deduplication method `first`, the first encountered instance of a duplicate will be retained, and any further occurrences be removed. When talking about duplicates, we refer to samples where *either one* of the summary or reference matches a previously encountered text. This avoids ambiguity in the training process. Currently, `first` primarily retains instances in the training set, but would remove more in other splits (validation or test splits). Alternatively `test_first` works on the same general principle of keeping the first encountered instance, but reverses the order in which splits are iterated. `first` uses `(train, validation, test)`, `test_first` works on `(test, validation, train)` instead.
+
+Duplications are expressed as four different types:
+1. `exact_duplicate`, where the exact combination of `(reference, summary)` has been encountered before.
+2. `both_duplicate`, where both the reference and summary have been encountered before, but in separate instances.
+3. `reference_duplicate`, where only the reference has been encountered before.
+4. `summary_duplicate`, where only the summary has been encountered before.
 
 Code example of filtering a Huggingface dataset:
 ```
