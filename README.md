@@ -80,8 +80,7 @@ cleaner = Cleaner(analyzer, min_length_summary=20, length_metric="char", extract
 # The German subset of MLSUM has plenty of extractive samples that need to be filtered
 data = load_dataset("mlsum", "de")
 
-clean_data = cleaner.clean_dataset(summary_text_column_name="summary", reference_text_column_name="text",
-                                   data["train"], data["validation"], data["test"])
+clean_data = cleaner.clean_dataset("summary", "text", data["train"], data["validation"], data["test"])
 ```
 
 ### `AspectSummarizer`
