@@ -119,6 +119,7 @@ class Cleaner:
 
         previously_seen_references = set()
         previously_seen_summaries = set()
+        previously_seen_both = set()
 
         # TODO: There could be a better way to initialize and track this.
         #  Could also be extended to account for removal by split?
@@ -127,7 +128,10 @@ class Cleaner:
                                     "identity_sample": {"train": 0, "validation": 0, "test": 0},
                                     "longer_summary": {"train": 0, "validation": 0, "test": 0},
                                     "extractiveness": {"train": 0, "validation": 0, "test": 0},
-                                    "duplicate": {"train": 0, "validation": 0, "test": 0}}
+                                    "exact_duplicate": {"train": 0, "validation": 0, "test": 0},
+                                    "both_duplicate": {"train": 0, "validation": 0, "test": 0},
+                                    "summary_duplicate": {"train": 0, "validation": 0, "test": 0},
+                                    "reference_duplicate": {"train": 0, "validation": 0, "test": 0}}
 
         # Iterate through all available datasets
         for split, split_name in passed_sets:
@@ -199,9 +203,22 @@ class Cleaner:
                             continue
                 # Deduplication is a bit more tricky, especially once we add more supported methods.
                 if self.deduplication_method in ["first", "test_first"]:
-                    if current_summary in previously_seen_summaries or \
-                       current_reference in previously_seen_references:
-                        filter_reason = "duplicate"
+                    if (current_reference, current_summary) in previously_seen_both:
+                        filter_reason = "exact_duplicate"
+                        filter_count_with_reason[filter_reason][split_name] += 1
+                        continue
+
+                    elif current_reference in previously_seen_references and \
+                            current_summary in previously_seen_summaries:
+                        filter_reason = "both_duplicate"
+                        filter_count_with_reason[filter_reason][split_name] += 1
+                        continue
+                    elif current_reference in previously_seen_references:
+                        filter_reason = "reference_duplicate"
+                        filter_count_with_reason[filter_reason][split_name] += 1
+                        continue
+                    elif current_summary in previously_seen_summaries:
+                        filter_reason = "summary_duplicate"
                         filter_count_with_reason[filter_reason][split_name] += 1
                         continue
                 # TODO: Catch other deduplication methods here
@@ -217,6 +234,7 @@ class Cleaner:
                 if self.deduplication_method in ["first", "test_first"]:
                     previously_seen_summaries.add(current_summary)
                     previously_seen_references.add(current_reference)
+                    previously_seen_both.add((current_reference, current_summary))
 
         if print_breakdown:
             total_filtered = sum([sum(reason.values()) for reason in filter_count_with_reason.values()])
