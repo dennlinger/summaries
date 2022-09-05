@@ -37,7 +37,7 @@ Currently, the `Analyzer` offers the following functionalities:
 - `is_identity_sample`: Checks whether the reference and summary are exactly the same. Could also be checked with `is_fully_extractive`, but will hopefully have more extensive comparison methods in the future, where near-duplicates due to different encodings would also be caught.
 
 Code example of detecting a faulty summarization sample:
-```
+```python
 from summaries import Analyzer
 
 analyzer = Analyzer(lemmatize=True, lang="en")
@@ -75,7 +75,7 @@ Duplications are expressed as four different types:
 4. `summary_duplicate`, where only the summary has been encountered before.
 
 Code example of filtering a Huggingface dataset:
-```
+```python
 from datasets import load_dataset
 from summaries import Analyzer, Cleaner
 
@@ -112,7 +112,7 @@ Whereas prior work uses a greedy algorithm that adds sentences until the metric 
 This has both the advantage of covering a wider range of the source text (for some summary sentences, alignments might appear relatively late in the text), however, at the cost of getting stuck in a local minimum. Furthermore, 1:1 alignments are not the end-all truth, since sentence splitting/merging are also frequent operations, which are not covered with this alignment strategy.
 
 **Usage:**
-```python3
+```python
 from summaries.aligners import RougeNAligner
 
 # Use ROUGE-2 optimization, with F1 scores as the maximizing attribute
