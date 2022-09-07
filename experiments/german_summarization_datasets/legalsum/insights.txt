@@ -1,0 +1,12 @@
+96 files were not assigned to any portion.
+79937 samples are in the train set.
+Of these, 78947 had text in the first guiding principle (98.76%).
+0 had text in the second principle (0.00%). 990 had both sections (1.24%).
+
+9992 samples are in the validation set.
+Of these, 9871 had text in the first guiding principle (98.79%).
+0 had text in the second principle (0.00%). 121 had both sections (1.21%).
+
+9993 samples are in the test set.
+Of these, 9859 had text in the first guiding principle (98.66%).
+0 had text in the second principle (0.00%). 134 had both sections (1.34%).

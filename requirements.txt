@@ -6,8 +6,9 @@ rouge-score
 transformers>=4.15
 sentence-transformers
 torch
+numpy
 tqdm
 protobuf
 
 # Used in debugging
-pke<=2.0
+# pke<=2.0
