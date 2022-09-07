@@ -11,6 +11,7 @@ from datasets import Dataset
 from ..analysis import Analyzer
 
 
+
 class Cleaner:
     analyzer: Analyzer
     deduplication_method: str
@@ -207,7 +208,6 @@ class Cleaner:
                         filter_reason = "exact_duplicate"
                         filter_count_with_reason[filter_reason][split_name] += 1
                         continue
-
                     elif current_reference in previously_seen_references and \
                             current_summary in previously_seen_summaries:
                         filter_reason = "both_duplicate"
