@@ -5,13 +5,13 @@ Similar to examples/density_plot.py, but computes it on the full WikiLingua (Ger
 from datasets import load_dataset
 
 from tqdm import tqdm
-from summaries.analysis import Analyzer
+from summaries.analysis import Stats
 from summaries.better_split import better_sentence_split
 
 if __name__ == '__main__':
     dataset = load_dataset("wiki_lingua", "german", ignore_verifications=True)
 
-    analyzer = Analyzer(lang="de")
+    analyzer = Stats(lang="de")
 
     for partition_name in ["train"]:
         partition = dataset[partition_name]
