@@ -329,6 +329,21 @@ class Analyzer:
             raise ValueError("Unexpected method encountered!")
 
     @staticmethod
+    def get_char_occurrences(text: Union[List[str], str]) -> Counter:
+        """
+        Determines the alphabet used (and each character's occurrence) across either a single or multiple texts.
+        :param text: Either a single text or a list of strings containing multiple documents.
+        :return: Counter with the character occurrence across text.
+        """
+        if isinstance(text, str):
+            return Counter(text)
+        else:
+            all_occs = Counter()
+            for snippet in text:
+                all_occs += Counter(snippet)
+            return all_occs
+
+    @staticmethod
     def get_passed_splits_with_names(train: Union[List, Dataset, None],
                                      validation: Union[List, Dataset, None],
                                      test: Union[List, Dataset, None]) -> List[Tuple]:
