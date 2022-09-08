@@ -337,11 +337,13 @@ class Analyzer:
         """
         if isinstance(text, str):
             return Counter(text)
-        else:
+        elif isinstance(text, list):
             all_occs = Counter()
             for snippet in text:
                 all_occs += Counter(snippet)
             return all_occs
+        else:
+            raise ValueError("Unrecognised type passed! Supports either str or List[str]!")
 
     @staticmethod
     def get_passed_splits_with_names(train: Union[List, Dataset, None],
