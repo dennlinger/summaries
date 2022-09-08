@@ -123,5 +123,5 @@ if __name__ == '__main__':
                       # extractiveness=(0.10, 0.90))
                       extractiveness="fully")
 
-    clean_dataset = cleaner.clean_dataset("summary", "reference", train, validation, test)
+    clean_dataset = cleaner.clean_dataset("summary", "reference", train, validation, test, enable_tqdm=True)
 
