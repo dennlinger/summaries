@@ -4,9 +4,12 @@ What
 
 import os
 import json
+from collections import Counter
 from typing import Set, Dict, List
 
 from tqdm import tqdm
+
+from summaries import Analyzer, Cleaner
 
 
 def load_split_files(fp: str) -> Set:
@@ -26,9 +29,15 @@ def construct_sample_from_data(data: Dict, fn: str) -> Dict:
             clean_text = text.strip("\n ")
             guiding_principle += f"{clean_text}\n"
 
+    reference = f"{facts}\n{reasoning}"
+    reference = reference.replace("\xa0", " ")
+    guiding_principle = guiding_principle.replace("\xa0", " ")
     sample = {
-        "id": fn,
-        "reference": f"{facts}\n{reasoning}",
+        "id": data["id"],
+        "date": data["date"],
+        "court": data["court"],
+        "file_name": fn,
+        "reference": reference,
         "summary": guiding_principle
     }
     return sample
@@ -42,9 +51,9 @@ def get_which_guiding_portion(data: Dict) -> str:
     if guiding_principle[0] and guiding_principle[1]:
         # raise ValueError(f"Both text portions are filled:\n{guiding_principle}")
         return "both"
-    elif guiding_principle:
+    elif guiding_principle[0]:
         return "first"
-    elif guiding_principle:
+    elif guiding_principle[1]:
         return "second"
     else:
         raise ValueError(f"Neither text for guiding principle is filled:\n{guiding_principle}")
@@ -54,10 +63,10 @@ def print_split(split: List[Dict], guide_split: List[str], split_name: str):
     first_split = len([guide for guide in guide_split if guide == "first"])
     second_split = len([guide for guide in guide_split if guide == "second"])
     both_split = len([guide for guide in guide_split if guide == "both"])
-    print(f"{len(split)} samples are in the {split_name} set. "
-          f"Of these, {first_split} had text in the first guiding principle ({first_split / len(split) * 100:.2f}%). "
+    print(f"{len(split)} samples are in the {split_name} set.\n"
+          f"Of these, {first_split} had text in the first guiding principle ({first_split / len(split) * 100:.2f}%).\n"
           f"{second_split} had text in the second principle ({second_split / len(split) * 100:.2f}%). "
-          f"{both_split} had both sections ({both_split / len(split) * 100:.2f}%).")
+          f"{both_split} had both sections ({both_split / len(split) * 100:.2f}%).\n\n")
 
 
 if __name__ == '__main__':
@@ -75,6 +84,9 @@ if __name__ == '__main__':
     guide_validation = []
     guide_test = []
     guide_unused = []
+
+    # reference_counter = Counter()
+    # summary_counter = Counter()
 
     for fn in tqdm(os.listdir(os.path.join(base_path, "data/"))):
         fp = os.path.join(base_path, "data/", fn)
@@ -97,7 +109,19 @@ if __name__ == '__main__':
             unused_samples.append(sample)
             # guide_unused.append(get_which_guiding_portion(data))
 
+        # reference_counter += Counter(sample["reference"])
+        # summary_counter += Counter(sample["summary"])
+
     print(f"{len(unused_samples)} files were not assigned to any portion.")
     print_split(train, guide_train, "train")
     print_split(validation, guide_validation, "validation")
     print_split(test, guide_test, "test")
+
+    analyzer = Analyzer(lemmatize=True, lang="de")
+    cleaner = Cleaner(analyzer, deduplication_method="test_first",
+                      min_length_summary=20, min_length_reference=50, length_metric="char",
+                      # extractiveness=(0.10, 0.90))
+                      extractiveness="fully")
+
+    clean_dataset = cleaner.clean_dataset("summary", "reference", train, validation, test)
+
