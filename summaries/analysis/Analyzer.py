@@ -6,16 +6,12 @@ or simply checking for the amount of overlap with a reference text.
 """
 from typing import Optional, List, Union, Tuple
 from collections import Counter
-import warnings
 
 from rouge_score.rouge_scorer import _create_ngrams, _score_lcs, _score_ngrams
 from spacy.language import Language
-import matplotlib.pyplot as plt
 from datasets import Dataset
-from seaborn import histplot
-from tqdm import tqdm
 
-from ..utils import get_nlp_model, interpret_lang_code, find_closest_reference_matches
+from ..utils import get_nlp_model, interpret_lang_code
 
 
 class Analyzer:
@@ -56,51 +52,6 @@ class Analyzer:
             self.processor = get_nlp_model("sm", lang=lang_code)
         else:
             self.processor = processor
-
-    def density_plot(self, references: List[List[str]], summaries: List[List[str]], out_fn: Optional[str] = None,
-                     max_num_bins: int = 100) -> None:
-        """
-        Generates density plots based on normalized position of reference sentences. A density
-        :param references: List of reference texts, split into sentences.
-        :param summaries: List of summaries; can be either gold or system summaries. Split into sentences.
-        :param out_fn: File name where to store the plot. Will only store the plot if `out_fn` is provided.
-        :param max_num_bins: Maximum number of bins to use in the resulting plot.
-        :return: No output, but resulting plot will be saved to disk if `out_fn` is specified.
-        """
-
-        reference_positions = []
-        max_article_length = 0
-        for reference_doc, summary_doc in tqdm(zip(references, summaries)):
-
-            # Need maximum length to determine lower bound of bins in histogram
-            if len(list(reference_doc)) > max_article_length:
-                max_article_length = len(list(reference_doc))
-
-            # FIXME: Currently does not respect the self.lemmatize option!
-            warnings.warn("`density_plot` currently does not respect the choice of `Analyzer.lemmatize`"
-                          "and will always lemmatize!")
-            # Compute likely source-target alignments
-            reference_positions.extend(find_closest_reference_matches(summary_doc, reference_doc, 2, self.processor))
-
-        self._generate_plot(reference_positions, min(max_num_bins, max_article_length), out_fn)
-
-    @staticmethod
-    def _generate_plot(positions: List[float], bins: int, out_fn: Union[None, str]):
-        """
-        Auxiliary wrapper function for the density plots
-        """
-        plt.figure()
-        # Simple hack to only plot a KDE if there are "sufficient" samples available.
-        if len(positions) > 10:
-            plot_kde = True
-        else:
-            plot_kde = False
-        ax = histplot(positions, bins=bins, stat="probability", kde=plot_kde, binrange=(0, 1))
-        ax.set(xlim=(0, 1))
-        ax.set(ylim=(0, 0.25))
-        if out_fn:
-            plt.savefig(out_fn, dpi=200)
-        plt.show()
 
     def analyze_dataset(self,
                         reference_text_column_name: str,
