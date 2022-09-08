@@ -35,7 +35,8 @@ if __name__ == '__main__':
 
     analyzer = Analyzer(lemmatize=True, lang="de")
     # Analysis with minimal length requirements set
-    cleaner = Cleaner(analyzer, length_metric="char", min_length_summary=20, min_length_reference=50,
+    cleaner = Cleaner(analyzer, deduplication_method="test_first",
+                      length_metric="char", min_length_summary=20, min_length_reference=50,
                       extractiveness="fully")
     # # Alternative analysis that does not impose length requirements
     # cleaner = Cleaner(analyzer, extractiveness="fully")
