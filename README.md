@@ -25,7 +25,6 @@ The `summaries` package provides a number of functionalities surrounding this as
 The main purpose of the `Analyzer` class is to serve a collection of different tools for inspecting datasets both at the level of a singular sample or the entire subset of training/validation/test splits.
 Currently, the `Analyzer` offers the following functionalities:
 
-- `density_plot`: Will generate a graph from a collection of references and summaries, split into sentences. For each sentence in the summary, this will determine the relative posiiton of the most related sentence in the reference text. The plot shows the aggregate across all sentences.
 - `count_ngram_repetitions`: For a single text sample, will count $n$-gram repetitions. Helpful to primarily analyze generated samples.
 - `lcs_overlap_fraction`: For a single reference-summary pair, will compute the longest common subsequence (LCS), divided by the length of the summary. A high score indicates that the summary is highly extractive.
 - `ngram_overlap_fraction`: Similar to `lcs_overlap_fraction`, but utilizes $n$-gram occurrences to determine similarity.
@@ -49,6 +48,14 @@ summary = "A slightly longer text."
 print(analyzer.is_summary_longer_than_reference(summary, reference, length_metric="char"))
 # True
 ```
+
+#### `summaries.analysis.Stats`
+An additional module similar to `Analyzer`, but more focused on dataset-wide computation of length statistics.
+
+Offers the following functions:
+
+- `density_plot`: Will generate a graph from a collection of references and summaries, split into sentences. For each sentence in the summary, this will determine the relative posiiton of the most related sentence in the reference text. The plot shows the aggregate across all sentences.
+- `compute_length_statistics`: As the name suggests, computes length statistics for a dataset.
 
 
 #### `summaries.Cleaner`
