@@ -1,8 +1,7 @@
 """
 Simple example to visualize a density plot
 """
-from summaries.analysis import Analyzer
-from summaries.utils import get_nlp_model
+from summaries.analysis import Stats
 
 from generate_summary import load_text_file_in_sentences
 
@@ -14,5 +13,5 @@ if __name__ == '__main__':
     # Test with single sentence (should be at position 0.89
     # extracted_sentence = "Aufwärts Aachen spielt in der ersten Schachbundesliga."
 
-    analyzer = Analyzer(lang="de")
-    analyzer.density_plot([example_reference], [example_summary])
+    stats = Stats(lang="de")
+    stats.density_plot([example_reference], [example_summary])
