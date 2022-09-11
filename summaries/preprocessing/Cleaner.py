@@ -239,13 +239,33 @@ class Cleaner:
         if print_breakdown:
             total_filtered = sum([sum(reason.values()) for reason in filter_count_with_reason.values()])
             print(f"{total_filtered} samples were removed from the dataset.")
-            print(f"Breakdown by filter category:")
-            for reason, count in filter_count_with_reason.items():
-                print(f"'{reason}': {count} samples removed across splits.")
+            # print(f"Breakdown by filter category:")
+            # for reason, count in filter_count_with_reason.items():
+            #     print(f"'{reason}': {count} samples removed across splits.")
+
+            if train_set is not None:
+                format_print(train_set, filter_count_with_reason, "train", cleaned_splits)
+            if validation_set is not None:
+                format_print(validation_set, filter_count_with_reason, "validation", cleaned_splits)
+            if test_set is not None:
+                format_print(test_set, filter_count_with_reason, "test", cleaned_splits)
 
         # FIXME: Currently "converts" Huggingface dataset inputs to List-based outputs for simplicity of internal
         #  handling, since we otherwise have to differentiate at some point.
         return cleaned_splits["train"], cleaned_splits["validation"], cleaned_splits["test"]
+
+
+def format_print(split, filter_count_with_reason, split_name, cleaned_splits):
+    print(f"& {split_name} & ${len(split)}$ & "
+          f"${filter_count_with_reason['reference_too_short'][split_name]}$ & "
+          f"${filter_count_with_reason['summary_too_short'][split_name]}$ & "
+          f"${filter_count_with_reason['identity_sample'][split_name]}$ & "
+          f"${filter_count_with_reason['longer_summary'][split_name]}$ & "
+          f"${filter_count_with_reason['extractiveness'][split_name]}$ & "
+          f"${filter_count_with_reason['exact_duplicate'][split_name] + filter_count_with_reason['both_duplicate'][split_name]}$ & "
+          f"${filter_count_with_reason['reference_duplicate'][split_name]}$ & "
+          f"${filter_count_with_reason['summary_duplicate'][split_name]}$ & "
+          f"${len(cleaned_splits[split_name])}\\ ({len(cleaned_splits[split_name]) / len(split) * 100:.2f}\\%)$ \\\\")
 
 
 def example_print_details(summary: str, reference: str, full_sample: Dict,
