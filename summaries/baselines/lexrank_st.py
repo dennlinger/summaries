@@ -49,6 +49,8 @@ def lexrank_st_baseline(text: Union[List[str], str],
 
     # Resolve Sentence Transformer model based on input
     if st_model is None:
+        warnings.warn("Falling back to default sentence-transformers model (paraphrase-multilingual-mpnet-base-v2). "
+                      "To avoid this warning, specify a model name or pass a sentence-transformers model.")
         st_model = get_st_model("paraphrase-multilingual-mpnet-base-v2", device=device)
     elif isinstance(st_model, str):
         st_model = get_st_model(st_model, device=device)

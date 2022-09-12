@@ -61,7 +61,6 @@ def get_st_model(model_name: str, device: Optional[str]) -> SentenceTransformer:
     return SentenceTransformer(model_name, device=device)
 
 
-
 class RelevantSentence(namedtuple("RelevantSentence", ["sentence", "metric", "relative_position"])):
     """
     Wrapper class for named tuple of results, including recall scores and relative position
