@@ -239,9 +239,9 @@ class Cleaner:
         if print_breakdown:
             total_filtered = sum([sum(reason.values()) for reason in filter_count_with_reason.values()])
             print(f"{total_filtered} samples were removed from the dataset.")
-            # print(f"Breakdown by filter category:")
-            # for reason, count in filter_count_with_reason.items():
-            #     print(f"'{reason}': {count} samples removed across splits.")
+            print(f"Breakdown by filter category:")
+            for reason, count in filter_count_with_reason.items():
+                print(f"'{reason}': {count} samples removed across splits.")
 
             if train_set is not None:
                 format_print(train_set, filter_count_with_reason, "train", cleaned_splits)
@@ -265,7 +265,8 @@ def format_print(split, filter_count_with_reason, split_name, cleaned_splits):
           f"${filter_count_with_reason['exact_duplicate'][split_name] + filter_count_with_reason['both_duplicate'][split_name]}$ & "
           f"${filter_count_with_reason['reference_duplicate'][split_name]}$ & "
           f"${filter_count_with_reason['summary_duplicate'][split_name]}$ & "
-          f"${len(cleaned_splits[split_name])}\\ ({len(cleaned_splits[split_name]) / len(split) * 100:.2f}\\%)$ \\\\")
+          f"${len(cleaned_splits[split_name])}$ & "
+          f"$({len(cleaned_splits[split_name]) / len(split) * 100:.2f}\\%)$ \\\\")
 
 
 def example_print_details(summary: str, reference: str, full_sample: Dict,
