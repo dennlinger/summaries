@@ -49,12 +49,9 @@ def leadk_baseline(reference_text: Union[List[str], str],
         if not bool(reference_text):
             raise ValueError("No reference text supplied!")
         # ... as well as empty individual sentences in the input
-        for el in reference_text[:k]:
-            # TODO: Fix to remove all kinds of whitespaces, not just the specified ones
-            if not bool(el.strip("\n\t ")):
-                raise ValueError("Empty sentence in the first three supplied sentences detected!")
+        summary = get_sentences(reference_text, k)
 
-        return " ".join(reference_text[:3])
+        return " ".join(summary)
 
     # Catch invalid parameter combinations
     if not processor and not lang:
@@ -69,18 +66,28 @@ def leadk_baseline(reference_text: Union[List[str], str],
         processor = get_nlp_model("sm", lang=lang)
 
     doc = processor(reference_text)
-    summary = []
+    summary = get_sentences([sentence.text for sentence in doc.sents], k)
 
+    return " ".join(summary)
+
+
+def get_sentences(sentences: List[str], k: int) -> List[str]:
+    """
+    Utility function that extracts a summary from (potentially poorly) split sentences.
+    :param sentences: List strings indicating individual sentences.
+    :param k: Number of sentences to choose. If len(sentences) <= k, will return the cleaned version of this text.
+    :return: Returns summary consisting of k sentences.
+    """
+    summary = []
     # Check for empty sentences caused by the automated splitter
-    for sentence in doc.sents:
+    for sentence in sentences:
         # Exit
         if len(summary) >= k:
             break
         # Sanity check to get only valid sentences
-        clean_sentence = sentence.text.strip("\n\t ")
+        clean_sentence = sentence.strip("\n\t ")
         if not clean_sentence:
             continue
         else:
             summary.append(clean_sentence)
-
-    return " ".join(summary)
+    return summary
