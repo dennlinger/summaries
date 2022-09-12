@@ -6,7 +6,6 @@ of the CNN/DailyMail dataset.
 from typing import Union, List, Optional
 
 from spacy.language import Language
-import spacy
 
 from ..utils import get_nlp_model
 
@@ -15,7 +14,7 @@ def lead3_baseline(reference_text: Union[List[str], str],
                    processor: Optional[Language] = None,
                    lang: Optional[str] = None) -> str:
     """
-    Baseline method that extractively summarizes an article by taking the first three sentences.
+    Baseline method that extractively summarizes an article by taking the first two sentences.
     :param reference_text: Reference text to be summarized. Can be either of raw reference text (str) or
         pre-split sentences (List[str]).
     :param processor: In the case of raw input text, this is an optional spaCy processor to use for sentence-splitting.
@@ -33,7 +32,7 @@ def leadk_baseline(reference_text: Union[List[str], str],
                    processor: Optional[Language] = None,
                    lang: Optional[str] = None) -> str:
     """
-    Baseline method that extractively summarizes an article by taking the first k sentences.
+    Baseline method that extractively summarizes an article by taking the first two sentences.
     :param reference_text: Reference text to be summarized. Can be either of raw reference text (str) or
         pre-split sentences (List[str]).
     :param k: Number of $k$ first sentences to consider as the summary
@@ -41,7 +40,7 @@ def leadk_baseline(reference_text: Union[List[str], str],
         If not specified, will automatically try and determine a suitable processor based on the `lang` parameter.
     :param lang: If raw input texts are specified and no `processor` is passed, `lang` will be used to determine
         the language of the reference text and load an appropriate spaCy model.
-    :return: Summary text consisting of the first k sentences of the reference text (str).
+    :return: Summary text consisting of the first three sentences of the reference text (str).
     """
 
     # If we have pre-split inputs, the computation is simple
@@ -50,12 +49,9 @@ def leadk_baseline(reference_text: Union[List[str], str],
         if not bool(reference_text):
             raise ValueError("No reference text supplied!")
         # ... as well as empty individual sentences in the input
-        for el in reference_text[:k]:
-            # TODO: Fix to remove all kinds of whitespaces, not just the specified ones
-            if not bool(el.strip("\n\t ")):
-                raise ValueError("Empty sentence in the first three supplied sentences detected!")
+        summary = get_sentences(reference_text, k)
 
-        return " ".join(reference_text[:3])
+        return " ".join(summary)
 
     # Catch invalid parameter combinations
     if not processor and not lang:
@@ -70,12 +66,28 @@ def leadk_baseline(reference_text: Union[List[str], str],
         processor = get_nlp_model("sm", lang=lang)
 
     doc = processor(reference_text)
-    summary = [sent.text for sent in doc.sents][:k]
-
-    # Check for empty sentences caused by the automated splitter
-    for sentence in summary:
-        if not sentence.strip("\n\t "):
-            raise ValueError("Empty sentence detected in the automatically split text! "
-                             "Consider using pre-split sentences instead")
+    summary = get_sentences([sentence.text for sentence in doc.sents], k)
 
     return " ".join(summary)
+
+
+def get_sentences(sentences: List[str], k: int) -> List[str]:
+    """
+    Utility function that extracts a summary from (potentially poorly) split sentences.
+    :param sentences: List strings indicating individual sentences.
+    :param k: Number of sentences to choose. If len(sentences) <= k, will return the cleaned version of this text.
+    :return: Returns summary consisting of k sentences.
+    """
+    summary = []
+    # Check for empty sentences caused by the automated splitter
+    for sentence in sentences:
+        # Exit
+        if len(summary) >= k:
+            break
+        # Sanity check to get only valid sentences
+        clean_sentence = sentence.strip("\n\t ")
+        if not clean_sentence:
+            continue
+        else:
+            summary.append(clean_sentence)
+    return summary
