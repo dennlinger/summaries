@@ -69,12 +69,18 @@ def leadk_baseline(reference_text: Union[List[str], str],
         processor = get_nlp_model("sm", lang=lang)
 
     doc = processor(reference_text)
-    summary = [sent.text for sent in doc.sents][:k]
+    summary = []
 
     # Check for empty sentences caused by the automated splitter
-    for sentence in summary:
-        if not sentence.strip("\n\t "):
-            raise ValueError("Empty sentence detected in the automatically split text! "
-                             "Consider using pre-split sentences instead")
+    for sentence in doc.sents:
+        # Exit
+        if len(summary) >= k:
+            break
+        # Sanity check to get only valid sentences
+        clean_sentence = sentence.text.strip("\n\t ")
+        if not clean_sentence:
+            continue
+        else:
+            summary.append(clean_sentence)
 
     return " ".join(summary)
