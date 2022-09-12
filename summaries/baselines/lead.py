@@ -55,7 +55,7 @@ def leadk_baseline(reference_text: Union[List[str], str],
 
     # Catch invalid parameter combinations
     if not processor and not lang:
-        raise ValueError("Either specify a language or pass a spaCy object!")
+        raise ValueError("Either specify a language or pass a spaCy object, or pass pre-split sentences!")
 
     # Check for empty string-like input
     if not bool(reference_text):

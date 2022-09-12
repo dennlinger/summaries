@@ -13,7 +13,7 @@ from spacy.language import Language
 from sentence_transformers.util import cos_sim
 from sentence_transformers import SentenceTransformer
 
-from summaries.utils import get_nlp_model
+from summaries.utils import get_nlp_model, get_st_model
 from .LexRank import degree_centrality_scores
 
 
@@ -49,21 +49,24 @@ def lexrank_st_baseline(text: Union[List[str], str],
 
     # Resolve Sentence Transformer model based on input
     if st_model is None:
-        st_model = SentenceTransformer("paraphrase-multilingual-mpnet-base-v2", device=device)
+        st_model = get_st_model("paraphrase-multilingual-mpnet-base-v2", device=device)
     elif isinstance(st_model, str):
-        st_model = SentenceTransformer(st_model, device=device)
+        st_model = get_st_model(st_model, device=device)
 
-    # Resolve language processor
-    if processor and lang:
-        warnings.warn("Language code specified despite a pre-loaded processor being passed. "
-                      "Will use the processor and ignore the language code.")
-    elif not processor and not lang:
-        raise ValueError("Specify either a pre-determined processor or a language code!")
-    elif not processor and lang:
-        processor = get_nlp_model("sm", lang=lang)
-
+    # Warn users about issues with parameters
+    if isinstance(text, list) and (processor or lang):
+        warnings.warn("Processor or language are specified despite not being needed for pre-split sentences.")
     # Resolve sentence input format
     if isinstance(text, str):
+        # Resolve language processor
+        if processor and lang:
+            warnings.warn("Language code specified despite a pre-loaded processor being passed. "
+                          "Will use the processor and ignore the language code.")
+        elif not processor and not lang:
+            raise ValueError("Specify either a pre-determined processor or a language code!")
+        elif not processor and lang:
+            processor = get_nlp_model("sm", lang=lang)
+
         text = [sent.text for sent in processor(text)]
 
     ordered_indices = compute_lexrank_sentences(st_model, text, device=device)
@@ -88,11 +91,8 @@ def compute_lexrank_sentences(model: SentenceTransformer, segments: List, device
 
     centrality_scores = degree_centrality_scores(self_similarities, threshold=None, increase_power=True)
 
-    central_indices = np.argsort(-centrality_scores)
+    central_indices = list(np.argsort(-centrality_scores))
     # Use argpartition instead of argsort for faster sorting, if we only need k << n sentences.
     # central_indices = np.argpartition(centrality_scores, -num_segments)[-num_segments:]
 
-    # Scores are originally in ascending order
-    central_indices = list(central_indices)
-    central_indices.reverse()
     return central_indices
