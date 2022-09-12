@@ -8,6 +8,7 @@ from operator import attrgetter
 from typing import Tuple, List, Union, Optional
 
 from rouge_score.rouge_scorer import _create_ngrams, _score_ngrams
+from sentence_transformers import SentenceTransformer
 from spacy.language import Doc, Language
 from spacy.tokens import Span
 import spacy
@@ -53,6 +54,11 @@ def get_nlp_model(size: str, disable: Tuple[str] = ("ner",), lang: str = "de"):
     model_identifier += size
 
     return spacy.load(model_identifier, disable=disable)
+
+
+@lru_cache(maxsize=2)
+def get_st_model(model_name: str, device: Optional[str]) -> SentenceTransformer:
+    return SentenceTransformer(model_name, device=device)
 
 
 class RelevantSentence(namedtuple("RelevantSentence", ["sentence", "metric", "relative_position"])):
