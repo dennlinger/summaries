@@ -44,6 +44,7 @@ def leadk_baseline(reference_text: Union[List[str], str],
     :return: Summary text consisting of the first k sentences of the reference text (str).
     """
 
+    # If we have pre-split inputs, the computation is simple
     if isinstance(reference_text, list):
         # Check for empty inputs...
         if not bool(reference_text):
