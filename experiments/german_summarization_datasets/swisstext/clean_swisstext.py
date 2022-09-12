@@ -15,6 +15,8 @@ if __name__ == '__main__':
     base_path = "/home/dennis/swisstext/"
 
     train_set = pd.read_csv(os.path.join(base_path, "data_train.csv"), delimiter=",").to_dict("records")
+    # The test set only contains the text, not the summaries...
+    # test_set = pd.read_csv(os.path.join(base_path, "data_test.csv"), delimiter=",").to_dict("records")
 
     analyzer = Analyzer(lemmatize=True, lang="de")
     cleaner = Cleaner(analyzer, deduplication_method="test_first",
