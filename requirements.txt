@@ -6,6 +6,8 @@ rouge-score
 transformers>=4.15
 sentence-transformers
 torch
+numpy
+scipy
 tqdm
 protobuf
 
