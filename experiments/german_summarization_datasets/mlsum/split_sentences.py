@@ -11,7 +11,7 @@ from summaries.utils import get_nlp_model
 
 def sentencize(model, texts, fn):
     sentencized_texts = []
-    for doc in model.pipe(texts, n_process=8):
+    for doc in tqdm(model.pipe(texts, n_process=8)):
         sentencized_texts.append([sent.text for sent in doc.sents])
 
     with open(fn, "w") as f:
