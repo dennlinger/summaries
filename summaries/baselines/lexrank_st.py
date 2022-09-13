@@ -17,13 +17,13 @@ from summaries.utils import get_nlp_model, get_st_model
 from .LexRank import degree_centrality_scores
 
 
-def lexrank_st_baseline(text: Union[List[str], str],
-                        processor: Optional[Language] = None,
-                        lang: Optional[str] = None,
-                        st_model: Optional[Union[str, SentenceTransformer]] = None,
-                        num_sentences: Optional[int] = None,
-                        max_length: Optional[int] = None,
-                        device: Optional[str] = None) -> str:
+def lexrank_st(text: Union[List[str], str],
+               processor: Optional[Language] = None,
+               lang: Optional[str] = None,
+               st_model: Optional[Union[str, SentenceTransformer]] = None,
+               num_sentences: Optional[int] = None,
+               max_length: Optional[int] = None,
+               device: Optional[str] = None) -> str:
     """
     Baseline using a modification of LexRank by replacing the default centrality scores with sentence-transformers
     similarity scores. By default, uses MMR to determine the optimal output length, but also works with pre-specified
