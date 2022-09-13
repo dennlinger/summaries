@@ -8,6 +8,16 @@ from tqdm import tqdm
 
 from summaries.utils import get_nlp_model
 
+
+def sentencize(model, texts, fn):
+    sentencized_texts = []
+    for doc in model.pipe(texts, n_process=8):
+        sentencized_texts.append([sent.text for sent in doc.sents])
+
+    with open(fn, "w") as f:
+        json.dump(sentencized_texts, f, ensure_ascii=False, indent=2)
+
+
 if __name__ == '__main__':
     nlp = get_nlp_model("sm", lang="de")
 
@@ -20,13 +30,5 @@ if __name__ == '__main__':
             ref_texts.append(sample["text"])
             summ_texts.append(sample["summary"])
 
-        ref_sentences = list(tqdm(nlp.pipe(ref_texts, n_process=16)))
-        ref_sentences = [[sent.text for sent in doc.sents] for doc in ref_sentences]
-        with open(f"{split}_reference_sentences.json", "w") as f:
-            json.dump(ref_sentences, f, ensure_ascii=False, indent=2)
-
-        summ_sentences = list(tqdm(nlp.pipe(summ_texts, n_process=16)))
-        summ_sentences = [[sent.text for sent in doc.sents] for doc in summ_sentences]
-        with open(f"{split}_summary_sentences.json", "w") as f:
-            json.dump(summ_sentences, f, ensure_ascii=False, indent=2)
-
+        sentencize(nlp, ref_texts, f"{split}_reference_sentences.json")
+        sentencize(nlp, summ_texts, f"{split}_summary_sentences.json")
