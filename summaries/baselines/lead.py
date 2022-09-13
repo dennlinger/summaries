@@ -10,9 +10,9 @@ from spacy.language import Language
 from ..utils import get_nlp_model
 
 
-def lead3_baseline(reference_text: Union[List[str], str],
-                   processor: Optional[Language] = None,
-                   lang: Optional[str] = None) -> str:
+def lead_3(reference_text: Union[List[str], str],
+           processor: Optional[Language] = None,
+           lang: Optional[str] = None) -> str:
     """
     Baseline method that extractively summarizes an article by taking the first two sentences.
     :param reference_text: Reference text to be summarized. Can be either of raw reference text (str) or
@@ -24,13 +24,13 @@ def lead3_baseline(reference_text: Union[List[str], str],
     :return: Summary text consisting of the first three sentences of the reference text (str).
     """
 
-    return leadk_baseline(reference_text, k=3, processor=processor, lang=lang)
+    return lead_k(reference_text, k=3, processor=processor, lang=lang)
 
 
-def leadk_baseline(reference_text: Union[List[str], str],
-                   k: int,
-                   processor: Optional[Language] = None,
-                   lang: Optional[str] = None) -> str:
+def lead_k(reference_text: Union[List[str], str],
+           k: int,
+           processor: Optional[Language] = None,
+           lang: Optional[str] = None) -> str:
     """
     Baseline method that extractively summarizes an article by taking the first two sentences.
     :param reference_text: Reference text to be summarized. Can be either of raw reference text (str) or
