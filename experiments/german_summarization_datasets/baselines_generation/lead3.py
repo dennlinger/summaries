@@ -24,12 +24,13 @@ if __name__ == '__main__':
         data = get_dataset(name, filtered=do_filter)
 
         for split in ["validation", "test"]:
+            print(f"Computing {filtered} {split} split...")
             samples = data[split]
             # Extract reference texts only.
             reference_texts = [sample[reference_column] for sample in samples]
 
             generated_summaries = []
-            for doc in nlp.pipe(reference_texts, n_process=8):
+            for doc in tqdm(nlp.pipe(reference_texts, n_process=8)):
                 generated_summaries.append(lead_3([sent.text for sent in doc.sents]))
 
             with open(f"{name}_{split}_{filtered}_lead3.json", "w") as f:
