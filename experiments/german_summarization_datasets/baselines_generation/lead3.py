@@ -7,15 +7,19 @@ from tqdm import tqdm
 
 from summaries.utils import get_nlp_model
 from summaries.baselines import lead_3
-from utils import get_dataset
+from utils import get_dataset, get_rouge_scores
 
 
 if __name__ == '__main__':
+    eval_rouge_scores = True
+    fast = False
+
     nlp = get_nlp_model("sm", lang="de")
 
     # MLSUM
     name = "mlsum"
     reference_column = "text"
+    summary_column = "summary"
 
     for do_filter in [False, True]:
         if do_filter:
@@ -30,6 +34,7 @@ if __name__ == '__main__':
             samples = data[split]
             # Extract reference texts only.
             reference_texts = [sample[reference_column] for sample in samples]
+            summary_texts = [sample[summary_column] for sample in samples]
 
             generated_summaries = []
             for doc in tqdm(nlp.pipe(reference_texts, n_process=8)):
@@ -37,3 +42,7 @@ if __name__ == '__main__':
 
             with open(f"{name}_{split}_{filtered}_lead3.json", "w") as f:
                 json.dump(generated_summaries, f, ensure_ascii=False, indent=2)
+
+            if eval_rouge_scores:
+                get_rouge_scores(summary_texts, generated_summaries)
+
