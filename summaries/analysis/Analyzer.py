@@ -171,7 +171,7 @@ class Analyzer:
 
     def is_summary_longer_than_reference(self, summary: str, reference: str, length_metric: str = "char") -> bool:
         """
-        Checks whether a particular sample has a longer summary than reference, indicating a compression ratio <= 1.0.
+        Checks whether a particular sample has a longer summary than reference, indicated by a compression ratio <= 1.0.
         This is a frequent sanity check for quality of samples. Also note that we flag samples that are the exact
         same length. This can happen in rare instances, where the samples are the exact same text.
         :param summary: Summary text.
@@ -182,23 +182,41 @@ class Analyzer:
             between "proper" tokenization and approximations.
         :return: Will return a boolean indicating whether the summary is longer than the reference.
         """
-
-        if length_metric == "char":
-            length_summary = len(summary)
-            length_reference = len(reference)
-        elif length_metric == "whitespace":
-            length_summary = len(summary.split(" "))
-            length_reference = len(reference.split(" "))
-        elif length_metric == "token":
-            length_summary = len(self._get_tokens(summary))
-            length_reference = len(self._get_tokens(reference))
-        else:
-            raise ValueError(f"Unexpected length metric passed! Supported length metrics: {self.valid_length_methods}")
-
-        if length_summary >= length_reference:
+        compression_ratio = self.compression_ratio(summary, reference, length_metric)
+        if compression_ratio <= 1.0:
             return True
         else:
             return False
+
+    def compression_ratio(self, summary: str, reference: str, length_metric: str = "char") -> float:
+        """
+        Computes the compression ratio between a given summary and reference text.
+        :param summary: Summary text.
+        :param reference: Reference text.
+        :param length_metric: Can be either of "char", "whitespace" or "token".
+        :return: Will return the compression ratio length_metric(reference) / length_metric(summary).
+        """
+        length_summary = self._get_length(summary, length_metric)
+        length_reference = self._get_length(reference, length_metric)
+        if length_reference == 0:
+            raise ZeroDivisionError("Empty reference text would cause ZeroDivisionError!")
+        return length_reference / length_summary
+
+    def _get_length(self, text: str, length_metric: str) -> int:
+        """
+        Compute the length of a given summary and reference under a particular length metric.
+        :param text: Input text
+        :param length_metric: Can be either of "char", "whitespace" or "token".
+        :return: Returns the lengths of the summary and reference text, respectively.
+        """
+        if length_metric == "char":
+            return  len(text)
+        elif length_metric == "whitespace":
+            return len(text.split(" "))
+        elif length_metric == "token":
+            return len(self._get_tokens(text))
+        else:
+            raise ValueError(f"Unexpected length metric passed! Supported length metrics: {self.valid_length_methods}")
 
     def is_text_too_short(self, text: str, min_length: int, length_metric: str = "char") \
             -> bool:
@@ -213,15 +231,7 @@ class Analyzer:
             between "proper" tokenization and approximations.
         :return: Will return a boolean indicating whether the text is too short or not.
         """
-
-        if length_metric == "char":
-            text_length = len(text)
-        elif length_metric == "whitespace":
-            text_length = len(text.split(" "))
-        elif length_metric == "token":
-            text_length = len(self._get_tokens(text))
-        else:
-            raise ValueError(f"Unexpected length metric passed! Supported length metrics: {self.valid_length_methods}")
+        text_length = self._get_length(text, length_metric)
 
         if text_length >= min_length:
             return False
