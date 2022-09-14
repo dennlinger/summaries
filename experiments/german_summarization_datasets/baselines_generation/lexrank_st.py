@@ -51,6 +51,7 @@ if __name__ == '__main__':
                 target_length = round(len(sentences) / average_ratio)
                 generated_summaries.append(lexrank_st(sentences,
                                                       st_model="paraphrase-multilingual-mpnet-base-v2",
+                                                      device="cuda:1",
                                                       num_sentences=target_length))
 
             with open(f"{name}_{split}_{filtered}_lexrank.json", "w") as f:
