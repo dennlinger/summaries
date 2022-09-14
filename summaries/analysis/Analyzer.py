@@ -210,7 +210,7 @@ class Analyzer:
         :return: Returns the lengths of the summary and reference text, respectively.
         """
         if length_metric == "char":
-            return  len(text)
+            return len(text)
         elif length_metric == "whitespace":
             return len(text.split(" "))
         elif length_metric == "token":
