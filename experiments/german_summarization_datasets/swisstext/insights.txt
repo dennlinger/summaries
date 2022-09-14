@@ -1,0 +1,12 @@
+5 samples were removed from the dataset.
+Breakdown by filter category:
+'reference_too_short': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+'summary_too_short': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+'identity_sample': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+'compression_ratio': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+'extractiveness': {'train': 3, 'validation': 0, 'test': 0} samples removed across splits.
+'exact_duplicate': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+'both_duplicate': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+'summary_duplicate': {'train': 2, 'validation': 0, 'test': 0} samples removed across splits.
+'reference_duplicate': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+& train & $100000$ & $0$ & $0$ & $0$ & $0$ & $3$ & $0$ & $0$ & $2$ & $99995$ & $(100.00\%)$ \\
