@@ -219,6 +219,8 @@ class Stats:
         """
         plt.figure()
         # FIXME: Potentially change `stat` to something else?
+        #  Also, binrange is currently incorrectly set.
+        raise NotImplementedError("Currently binrange is not set correctly")
         ax = histplot(lengths, bins=bins, stat="probability", kde=False, binrange=(0, 1))
 
         # Heuristic to determine cutoff along x-axis for extremely long tails
