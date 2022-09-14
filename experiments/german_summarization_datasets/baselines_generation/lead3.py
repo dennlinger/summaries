@@ -3,6 +3,8 @@ Script to generate baseline lead_3 summaries for all datasets.
 """
 import json
 
+from tqdm import tqdm
+
 from summaries.utils import get_nlp_model
 from summaries.baselines import lead_3
 from utils import get_dataset
