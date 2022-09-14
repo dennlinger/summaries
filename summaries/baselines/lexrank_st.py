@@ -69,7 +69,7 @@ def lexrank_st(text: Union[List[str], str],
         elif not processor and lang:
             processor = get_nlp_model("sm", lang=lang)
 
-        text = [sent.text for sent in processor(text)]
+        text = [sent.text for sent in processor(text).sents]
 
     ordered_indices = compute_lexrank_sentences(st_model, text, device=device)
 
