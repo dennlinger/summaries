@@ -17,7 +17,8 @@ if __name__ == '__main__':
     name = "mlsum"
     reference_column = "text"
 
-    for do_filter in [False, True]:
+    # for do_filter in [False, True]:
+    for do_filter in [True]:
         if do_filter:
             filtered = "filtered"
         else:

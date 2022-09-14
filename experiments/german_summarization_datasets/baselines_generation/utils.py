@@ -1,12 +1,14 @@
 """
 Utility functions used across experiments
 """
+from functools import lru_cache
 
 from datasets import load_dataset
 
 from summaries import Analyzer, Cleaner
 
 
+@lru_cache(maxsize=4)
 def get_dataset(name: str, filtered: bool = False):
     if name == "mlsum":
         data = load_dataset("mlsum", "de")
@@ -25,6 +27,7 @@ def get_dataset(name: str, filtered: bool = False):
                           extractiveness="fully")
         clean_data = cleaner.clean_dataset(summary_column, reference_column,
                                            data["train"], data["validation"], data["test"], enable_tqdm=True)
+
         return clean_data
     else:
         return data
