@@ -101,7 +101,7 @@ class Cleaner:
                       test_set: Optional[Union[List[Dict], Dataset]] = None,
                       print_details: Optional[Callable] = None,
                       enable_tqdm: bool = False,
-                      print_breakdown: bool = True) -> Tuple[List, List, List]:
+                      print_breakdown: bool = True) -> Dict:
         """
         Function that removes samples based on the available Analyzer module. By default, removes the following:
             - Samples with incompatible lengths (summary longer than reference)
@@ -117,8 +117,8 @@ class Cleaner:
             condition to inspect samples that will be filtered on specific criteria.
         :param enable_tqdm: Will show a progress bar if enabled.
         :param print_breakdown: If enabled, will output a breakdown of where samples were filtered.
-        :return: Returns a tuple of (cleaned_train, cleaned_val, cleaned_test),
-            where each of those is a list of samples that satisfy all filtering criteria.
+        :return: Returns a Dict of ("train": cleaned_train, "validation": cleaned_val, "test": cleaned_test),
+            where each of those is a list of samples that satisfy all filtering criteria (or None, if none was passed).
         """
 
         passed_sets = self.analyzer.get_passed_splits_with_names(train_set, validation_set, test_set)
@@ -263,7 +263,7 @@ class Cleaner:
 
         # FIXME: Currently "converts" Huggingface dataset inputs to List-based outputs for simplicity of internal
         #  handling, since we otherwise have to differentiate at some point.
-        return cleaned_splits["train"], cleaned_splits["validation"], cleaned_splits["test"]
+        return cleaned_splits
 
 
 def format_print(split, filter_count_with_reason, split_name, cleaned_splits):
