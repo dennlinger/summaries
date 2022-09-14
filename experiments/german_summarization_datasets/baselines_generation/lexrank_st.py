@@ -24,8 +24,7 @@ if __name__ == '__main__':
     reference_column = "text"
     summary_column = "summary"
 
-    # for do_filter in [False, True]:
-    for do_filter in [True]:
+    for do_filter in [False, True]:
         if do_filter:
             filtered = "filtered"
         else:
@@ -33,8 +32,7 @@ if __name__ == '__main__':
 
         data = get_dataset(name, filtered=do_filter)
 
-        # for split in ["validation", "test"]:
-        for split in ["test"]:
+        for split in ["validation", "test"]:
             print(f"Computing {filtered} {split} split...")
             samples = data[split]
             # Extract reference texts only.
@@ -50,7 +48,7 @@ if __name__ == '__main__':
             for doc in tqdm(nlp.pipe(reference_texts, n_process=8)):
                 sentences = [sent.text for sent in doc.sents]
                 # Approximate the target length based on average compression. Min length is one sentence.
-                target_length = min(round(len(sentences) / average_ratio), 1)
+                target_length = max(round(len(sentences) / average_ratio), 1)
                 generated_summaries.append(lexrank_st(sentences,
                                                       st_model="paraphrase-multilingual-mpnet-base-v2",
                                                       device="cuda:1",
