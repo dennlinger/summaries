@@ -33,6 +33,7 @@ if __name__ == '__main__':
     analyzer = Analyzer(lemmatize=True, lang="de")
     cleaner = Cleaner(analyzer, deduplication_method="test_first",
                       min_length_summary=5, min_length_reference=20, length_metric="char",
+                      min_compression_ratio=1.25,
                       extractiveness="fully")
 
     clean_data = cleaner.clean_dataset("summary", "document", train, enable_tqdm=True)

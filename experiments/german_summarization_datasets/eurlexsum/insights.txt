@@ -1,0 +1,15 @@
+With 1.25 min CR:
+18 samples were removed from the dataset.
+Breakdown by filter category:
+'reference_too_short': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+'summary_too_short': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+'identity_sample': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+'compression_ratio': {'train': 18, 'validation': 0, 'test': 0} samples removed across splits.
+'extractiveness': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+'exact_duplicate': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+'both_duplicate': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+'summary_duplicate': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+'reference_duplicate': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+& train & $1115$ & $0$ & $0$ & $0$ & $18$ & $0$ & $0$ & $0$ & $0$ & $1097$ & $(98.39\%)$ \\
+& validation & $187$ & $0$ & $0$ & $0$ & $0$ & $0$ & $0$ & $0$ & $0$ & $187$ & $(100.00\%)$ \\
+& test & $188$ & $0$ & $0$ & $0$ & $0$ & $0$ & $0$ & $0$ & $0$ & $188$ & $(100.00\%)$ \\

@@ -22,7 +22,9 @@ if __name__ == '__main__':
     test = extract_samples(dataset["test"])
 
     analyzer = Analyzer(lemmatize=True, lang="de")
-    cleaner = Cleaner(analyzer, deduplication_method="test_first", min_length_summary=20, min_length_reference=50,
-                      length_metric="char", extractiveness="fully")
+    cleaner = Cleaner(analyzer, deduplication_method="test_first",
+                      min_length_summary=20, min_length_reference=50, length_metric="char",
+                      min_compression_ratio=1.25,
+                      extractiveness="fully")
 
     clean_split = cleaner.clean_dataset("summary_text", "reference_text", train, validation, test, enable_tqdm=True)

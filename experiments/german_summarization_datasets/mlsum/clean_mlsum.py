@@ -26,18 +26,19 @@ if __name__ == '__main__':
     # Analysis with minimal length requirements set
     cleaner = Cleaner(analyzer, deduplication_method="test_first",
                       length_metric="char", min_length_summary=20, min_length_reference=50,
+                      min_compression_ratio=1.25,
                       extractiveness="fully")
     # # Alternative analysis that does not impose length requirements
     # cleaner = Cleaner(analyzer, extractiveness="fully")
 
-    clean_massivesumm = cleaner.clean_dataset("summary", "text",
-                                              dataset["train"], dataset["validation"], dataset["test"],
-                                              enable_tqdm=True)
+    clean_mlsum = cleaner.clean_dataset("summary", "text",
+                                        dataset["train"], dataset["validation"], dataset["test"],
+                                        enable_tqdm=True)
 
     # # To investigate samples a bit more, you can additionally pass a function, as defined above:
     # clean_massivesumm = cleaner.clean_dataset("summary", "text", train, enable_tqdm=True,
     #                                           print_details=custom_print_details)
 
-    print(f"Train: ${len(dataset['train'])}$ & ${len(clean_massivesumm[0])}$ & ${len(clean_massivesumm[0]) / len(dataset['train']) * 100:.2f}$")
-    print(f"Val: ${len(dataset['validation'])}$ & ${len(clean_massivesumm[1])}$ & ${len(clean_massivesumm[1]) / len(dataset['validation']) * 100:.2f}$")
-    print(f"Test: ${len(dataset['test'])}$ & ${len(clean_massivesumm[2])}$ & ${len(clean_massivesumm[2]) / len(dataset['test']) * 100:.2f}$")
+    print(f"Train: ${len(dataset['train'])}$ & ${len(clean_mlsum[0])}$ & ${len(clean_mlsum[0]) / len(dataset['train']) * 100:.2f}$")
+    print(f"Val: ${len(dataset['validation'])}$ & ${len(clean_mlsum[1])}$ & ${len(clean_mlsum[1]) / len(dataset['validation']) * 100:.2f}$")
+    print(f"Test: ${len(dataset['test'])}$ & ${len(clean_mlsum[2])}$ & ${len(clean_mlsum[2]) / len(dataset['test']) * 100:.2f}$")

@@ -21,3 +21,23 @@ A total of 3306 samples were fully extractive (30.89%).
 A total of 0 samples had invalid lengths (0.00%).
 A total of 0 samples had either empty summary or reference texts (0.00%).
 Of those samples, 0 samples had several issues.
+
+
+Insights from running with 1.25 CR:
+133060 samples were removed from the dataset.
+Breakdown by filter category:
+'reference_too_short': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+'summary_too_short': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+'identity_sample': {'train': 39, 'validation': 0, 'test': 0} samples removed across splits.
+'compression_ratio': {'train': 30, 'validation': 0, 'test': 0} samples removed across splits.
+'extractiveness': {'train': 126204, 'validation': 3285, 'test': 3306} samples removed across splits.
+'exact_duplicate': {'train': 31, 'validation': 1, 'test': 1} samples removed across splits.
+'both_duplicate': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+'summary_duplicate': {'train': 105, 'validation': 5, 'test': 2} samples removed across splits.
+'reference_duplicate': {'train': 45, 'validation': 1, 'test': 5} samples removed across splits.
+& train & $220887$ & $0$ & $0$ & $39$ & $30$ & $126204$ & $31$ & $45$ & $105$ & $94433$ & $(42.75\%)$ \\
+& validation & $11394$ & $0$ & $0$ & $0$ & $0$ & $3285$ & $1$ & $1$ & $5$ & $8102$ & $(71.11\%)$ \\
+& test & $10701$ & $0$ & $0$ & $0$ & $0$ & $3306$ & $1$ & $5$ & $2$ & $7387$ & $(69.03\%)$ \\
+Train: $220887$ & $94433$ & $42.75$
+Val: $11394$ & $8102$ & $71.11$
+Test: $10701$ & $7387$ & $69.03$
