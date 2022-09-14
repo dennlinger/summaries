@@ -96,6 +96,6 @@ def print_aggregate(result: Dict, fast: bool = False) -> None:
 
     # Necessary to avoid KeyError for RougeL
     if not fast:
-        print(f"{result['rouge1'].mid.fmeasure * 100:5.2f} & "
-              f"{result['rouge2'].mid.fmeasure * 100:5.2f} & "
-              f"{result['rougeL'].mid.fmeasure * 100:5.2f}")
+        print(f"${result['rouge1'].mid.fmeasure * 100:5.2f}$ & "
+              f"${result['rouge2'].mid.fmeasure * 100:5.2f}$ & "
+              f"${result['rougeL'].mid.fmeasure * 100:5.2f}$")
