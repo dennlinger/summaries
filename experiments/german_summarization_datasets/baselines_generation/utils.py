@@ -58,7 +58,7 @@ def get_rouge_scorer_with_cistem(fast=False):
     return scorer
 
 
-def get_rouge_scores(gold_summaries: List[str], system_predictions: List[str], fast=False) -> None:
+def get_rouge_scores(gold_summaries: List[str], system_predictions: List[str], fast=False) -> BootstrapAggregator:
     scorer = get_rouge_scorer_with_cistem(fast=fast)
     aggregator = BootstrapAggregator(confidence_interval=0.95, n_samples=2000)
 
@@ -71,10 +71,12 @@ def get_rouge_scores(gold_summaries: List[str], system_predictions: List[str], f
         aggregator.add_scores(scorer.score(gold, prediction))
 
     result = aggregator.aggregate()
-    print_aggregate(result)
+    print_aggregate(result, fast)
+
+    return aggregator
 
 
-def print_aggregate(result: Dict) -> None:
+def print_aggregate(result: Dict, fast: bool = False) -> None:
     for key, value_set in result.items():
         print(f"----------------{key} ---------------------")
         print(f"Precision | "
@@ -89,3 +91,11 @@ def print_aggregate(result: Dict) -> None:
               f"low: {value_set.low.fmeasure * 100:5.2f}, "
               f"mid: {value_set.mid.fmeasure * 100:5.2f}, "
               f"high: {value_set.high.fmeasure * 100:5.2f}")
+        print(f"--------------------------------------------")
+        print(f"{key} F1: {value_set.mid.fmeasure * 100:5.2f}")
+
+    # Necessary to avoid KeyError for RougeL
+    if not fast:
+        print(f"{result['rouge1'].mid.fmeasure * 100:5.2f} & "
+              f"{result['rouge2'].mid.fmeasure * 100:5.2f} & "
+              f"{result['rougeL'].mid.fmeasure * 100:5.2f}")
