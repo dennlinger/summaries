@@ -54,7 +54,7 @@ if __name__ == '__main__':
             data = get_dataset(name, filtered=do_filter)
 
             for split in ["validation", "test"]:
-                print(f"Computing {filtered} {split} split...")
+                print(f"Computing {filtered} {split} split with model {model_name}...")
                 samples = data[split]
 
                 # Extract reference texts only.
