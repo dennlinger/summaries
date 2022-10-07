@@ -20,7 +20,7 @@ if __name__ == '__main__':
     analyzer = Analyzer(lemmatize=True, lang="de")
 
     # for name in ["mlsum", "klexikon", "legalsum", "eurlexsum"]:
-    for name in ["legalsum", "eurlexsum"]:
+    for name in ["klexikon", "legalsum", "eurlexsum"]:
         if name == "mlsum":
             reference_column = "wiki_text"
             summary_column = "klexikon_text"
