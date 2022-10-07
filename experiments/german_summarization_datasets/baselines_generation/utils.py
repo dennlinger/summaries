@@ -97,8 +97,8 @@ def get_dataset(name: str, filtered: bool = False):
 
 
 def fuse_sentences_but_keep_sample(sample):
-    sample["wiki_text"] = "\n".join([line.strip("\n= ") for line in sample["wiki_sentences"] if line.strip("\n= ")])
-    sample["klexikon_text"] = "\n".join([line.strip("\n= ") for line in sample["klexikon_sentences"] if line.strip("\n= ")])
+    sample["wiki_text"] = "\n".join([line.strip("\n= ") for line in sample["wiki_sentences"] if line.strip("\n= ") != ""])
+    sample["klexikon_text"] = "\n".join([line.strip("\n= ") for line in sample["klexikon_sentences"] if line.strip("\n= ") != ""])
 
     return sample
 
