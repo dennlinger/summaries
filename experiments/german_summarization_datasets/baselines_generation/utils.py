@@ -2,7 +2,9 @@
 Utility functions used across experiments
 """
 from functools import lru_cache
-from typing import List, Dict
+from typing import List, Dict, Set
+import json
+import os
 
 from tqdm import tqdm
 from datasets import load_dataset
@@ -17,10 +19,64 @@ from summaries import Analyzer, Cleaner
 def get_dataset(name: str, filtered: bool = False):
     if name == "mlsum":
         data = load_dataset("mlsum", "de")
+        reference_column = "text"
+        summary_column = "summary"
+    elif "klexikon" in name:
+        data = load_dataset("dennlinger/klexikon")
 
-        if filtered:
-            reference_column = "text"
-            summary_column = "summary"
+        data = {
+            "train": [fuse_sentences_but_keep_sample(sample) for sample in data["train"]],
+            "validation": [fuse_sentences_but_keep_sample(sample) for sample in data["validation"]],
+            "test": [fuse_sentences_but_keep_sample(sample) for sample in data["test"]]
+        }
+
+        reference_column = "wiki_text"
+        summary_column = "klexikon_text"
+    elif "legalsum" in name:
+        base_path = "/home/dennis/LegalSum/"
+        train_files = load_split_files(os.path.join(base_path, "train_files.txt"))
+        val_files = load_split_files(os.path.join(base_path, "val_files.txt"))
+        test_files = load_split_files(os.path.join(base_path, "test_files.txt"))
+
+        train = []
+        validation = []
+        test = []
+
+        for fn in tqdm(os.listdir(os.path.join(base_path, "data/"))):
+            fp = os.path.join(base_path, "data/", fn)
+
+            with open(fp) as f:
+                data = json.load(f)
+            sample = construct_sample_from_data(data, fn)
+
+            # Assign the sample to the correct dataset.
+            if fn in train_files:
+                train.append(sample)
+            elif fn in val_files:
+                validation.append(sample)
+            elif fn in test_files:
+                test.append(sample)
+            else:
+                continue
+
+        data = {
+            "train": train,
+            "validation": validation,
+            "test": test
+        }
+
+        reference_column = "reference"
+        summary_column = "summary"
+    elif "eurlexsum" in name:
+        with open("/home/dennis/german_eurlexsum/german_eurlexsum.json") as f:
+            data = json.load(f)
+        data = {
+            "train": extract_samples(data["train"]),
+            "validation": extract_samples(data["validation"]),
+            "test": extract_samples(data["test"])
+        }
+        reference_column = "reference_text"
+        summary_column = "summary_text"
     else:
         raise ValueError("Unrecognized dataset name passed!")
 
@@ -33,9 +89,57 @@ def get_dataset(name: str, filtered: bool = False):
         clean_data = cleaner.clean_dataset(summary_column, reference_column,
                                            data["train"], data["validation"], data["test"], enable_tqdm=True)
 
+        print(f"Loading {[len(v) for _, v in clean_data.items()]} samples")
         return clean_data
     else:
+        print(f"Loading {[len(v) for _, v in data.items()]} samples")
         return data
+
+
+def fuse_sentences_but_keep_sample(sample):
+    sample["wiki_text"] = "\n".join(sample["wiki_sentences"])
+    sample["klexikon_text"] = "\n".join(sample["klexikon_sentences"])
+
+    return sample
+
+
+def extract_samples(split):
+    samples = []
+    for celex_id, sample in split.items():
+        samples.append(sample)
+
+    return samples
+
+
+def load_split_files(fp: str) -> Set:
+    with open(fp) as f:
+        files = f.readlines()
+    return set([fn.strip("\n ") for fn in files])
+
+
+def construct_sample_from_data(data: Dict, fn: str) -> Dict:
+    # Sentence-based storage requires unfolding
+    facts = "\n".join([line.strip("\n ") for line in data["facts"]])
+    reasoning = "\n".join([line.strip("\n ") for line in data["reasoning"]])
+    # Slightly more complex for summary text, given that we have no idea where it's coming from.
+    guiding_principle = ""
+    for sub_text in data["guiding_principle"]:
+        for text in sub_text:
+            clean_text = text.strip("\n ")
+            guiding_principle += f"{clean_text}\n"
+
+    reference = f"{facts}\n{reasoning}"
+    reference = reference.replace("\xa0", " ")
+    guiding_principle = guiding_principle.replace("\xa0", " ")
+    sample = {
+        "id": data["id"],
+        "date": data["date"],
+        "court": data["court"],
+        "file_name": fn,
+        "reference": reference,
+        "summary": guiding_principle
+    }
+    return sample
 
 
 # The following implementation is borrowed from the Klexikon paper repository (Aumiller and Gertz, 2022):
