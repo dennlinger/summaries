@@ -57,7 +57,8 @@ if __name__ == '__main__':
 
                 generated_summaries = []
                 print(f"Generating spacy docs for each summary...")
-                for doc in tqdm(nlp.pipe(reference_texts, n_process=8)):
+                for reference in tqdm(reference_texts):
+                    doc = nlp(reference)
                     generated_summaries.append(lead_3([sent.text for sent in doc.sents]))
 
                 with open(f"{name}_{split}_{filtered}_lead3.json", "w") as f:
