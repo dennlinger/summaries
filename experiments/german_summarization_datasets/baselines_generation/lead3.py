@@ -18,7 +18,7 @@ if __name__ == '__main__':
     nlp = get_nlp_model("sm", lang="de")
 
     # for name in ["mlsum", "klexikon", "legalsum", "eurlexsum"]:
-    for name in ["klexikon", "legalsum", "eurlexsum"]:
+    for name in ["legalsum", "eurlexsum"]:
         if name == "mlsum":
             reference_column = "wiki_text"
             summary_column = "klexikon_text"
