@@ -18,7 +18,7 @@ if __name__ == '__main__':
     nlp = get_nlp_model("sm", lang="de")
 
     # for name in ["mlsum", "klexikon", "legalsum", "eurlexsum"]:
-    for name in ["legalsum", "eurlexsum"]:
+    for name in ["klexikon", "legalsum", "eurlexsum"]:
         if name == "mlsum":
             reference_column = "wiki_text"
             summary_column = "klexikon_text"
@@ -53,13 +53,15 @@ if __name__ == '__main__':
                 samples = data[split]
 
                 reference_texts = [sample[reference_column] for sample in samples]
-                summary_texts = [sample[summary_column] for sample in samples]
+                summary_texts = [sample[summary_column].replace("\n", " ") for sample in samples]
 
                 generated_summaries = []
                 print(f"Generating spacy docs for each summary...")
                 for reference in tqdm(reference_texts):
                     doc = nlp(reference)
-                    generated_summaries.append(lead_3([sent.text for sent in doc.sents]))
+                    sentences = [sent.text.strip("\n ") for sent in doc.sents if sent.text.strip("\n ") != ""]
+
+                    generated_summaries.append(lead_3(sentences))
 
                 with open(f"{name}_{split}_{filtered}_lead3.json", "w") as f:
                     json.dump(generated_summaries, f, ensure_ascii=False, indent=2)

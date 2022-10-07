@@ -22,8 +22,8 @@ if __name__ == '__main__':
     # for name in ["mlsum", "klexikon", "legalsum", "eurlexsum"]:
     for name in ["klexikon", "legalsum", "eurlexsum"]:
         if name == "mlsum":
-            reference_column = "wiki_text"
-            summary_column = "klexikon_text"
+            reference_column = "reference"
+            summary_column = "summary"
         elif name == "klexikon":
             reference_column = "wiki_text"
             summary_column = "klexikon_text"
@@ -50,7 +50,7 @@ if __name__ == '__main__':
                 samples = data[split]
                 # Extract reference texts only.
                 reference_texts = [sample[reference_column] for sample in samples]
-                summary_texts = [sample[summary_column] for sample in samples]
+                summary_texts = [sample[summary_column].replace("\n", " ") for sample in samples]
 
                 # Compute the compression ratios based on this
                 ratios = [analyzer.compression_ratio(summary, reference, "char")
@@ -60,7 +60,7 @@ if __name__ == '__main__':
                 generated_summaries = []
                 for reference in tqdm(reference_texts):
                     doc = nlp(reference)
-                    sentences = [sent.text for sent in doc.sents]
+                    sentences = [sent.text.strip("\n ") for sent in doc.sents if sent.text.strip("\n ") != ""]
                     # Approximate the target length based on average compression. Min length is one sentence.
                     target_length = max(round(len(sentences) / average_ratio), 1)
                     generated_summaries.append(lexrank_st(sentences,
