@@ -15,57 +15,70 @@ from utils import get_dataset, get_rouge_scores
 if __name__ == '__main__':
     eval_rouge_scores = True
     fast = False
-
     nlp = get_nlp_model("sm", lang="de")
 
-    # MLSUM
-    name = "mlsum"
-    reference_column = "text"
-    summary_column = "summary"
-
-    plot_scores = {
-        "filtered": {"rouge1": [], "rouge2": [], "rougeL": []},
-        "unfiltered": {"rouge1": [], "rouge2": [], "rougeL": []}
-    }
-
-    for do_filter in [False, True]:
-        if do_filter:
-            filtered = "filtered"
+    # for name in ["mlsum", "klexikon", "legalsum", "eurlexsum"]:
+    for name in ["klexikon", "legalsum", "eurlexsum"]:
+        if name == "mlsum":
+            reference_column = "wiki_text"
+            summary_column = "klexikon_text"
+        elif name == "klexikon":
+            reference_column = "wiki_text"
+            summary_column = "klexikon_text"
+        elif name == "legalsum":
+            reference_column = "reference"
+            summary_column = "summary"
+        elif name == "eurlexsum":
+            reference_column = "reference_text"
+            summary_column = "summary_text"
         else:
-            filtered = "unfiltered"
+            raise ValueError("Not configured yet.")
 
-        data = get_dataset(name, filtered=do_filter)
+        plot_scores = {
+            "filtered": {"rouge1": [], "rouge2": [], "rougeL": []},
+            "unfiltered": {"rouge1": [], "rouge2": [], "rougeL": []}
+        }
 
-        for split in ["validation", "test"]:
-            print(f"Computing {filtered} {split} split...")
-            samples = data[split]
-            # Extract reference texts only.
-            reference_texts = [sample[reference_column] for sample in samples]
-            summary_texts = [sample[summary_column] for sample in samples]
+        # for do_filter in [False, True]:
+        for do_filter in [True]:
+            if do_filter:
+                filtered = "filtered"
+            else:
+                filtered = "unfiltered"
 
-            generated_summaries = []
-            for doc in tqdm(nlp.pipe(reference_texts, n_process=8)):
-                generated_summaries.append(lead_3([sent.text for sent in doc.sents]))
+            data = get_dataset(name, filtered=do_filter)
 
-            with open(f"{name}_{split}_{filtered}_lead3.json", "w") as f:
-                json.dump(generated_summaries, f, ensure_ascii=False, indent=2)
+            for split in ["validation", "test"]:
+                print(f"Computing {filtered} {split} split...")
+                samples = data[split]
 
-            if eval_rouge_scores:
-                aggregator = get_rouge_scores(summary_texts, generated_summaries)
+                reference_texts = [sample[reference_column] for sample in samples]
+                summary_texts = [sample[summary_column] for sample in samples]
 
-                # Also add the F1 scores for later plotting
-                for metric, scores in aggregator._scores.items():
-                    plot_scores[filtered][metric].extend([score.fmeasure for score in scores])
+                generated_summaries = []
+                print(f"Generating spacy docs for each summary...")
+                for doc in tqdm(nlp.pipe(reference_texts, n_process=8)):
+                    generated_summaries.append(lead_3([sent.text for sent in doc.sents]))
 
-    if name == "mlsum":
-        for metric in ["rouge1", "rouge2", "rougeL"]:
-            fig, ax = plt.subplots()
-            for filtered in ["unfiltered", "filtered"]:
-                seaborn.histplot(plot_scores[filtered][metric], bins=20, stat="count",
-                                 kde=False, binrange=(0, 1), ax=ax)
-            ax.set(xlim=(0, 1))
-            # TODO: How to automatically detect whether the maximum is larger?
-            ax.set(ylim=(0, 1500))
+                with open(f"{name}_{split}_{filtered}_lead3.json", "w") as f:
+                    json.dump(generated_summaries, f, ensure_ascii=False, indent=2)
 
-            plt.savefig(f"mlsum_{metric}.png", dpi=300)
-            plt.show()
+                if eval_rouge_scores:
+                    aggregator = get_rouge_scores(summary_texts, generated_summaries)
+
+                    # Also add the F1 scores for later plotting
+                    for metric, scores in aggregator._scores.items():
+                        plot_scores[filtered][metric].extend([score.fmeasure for score in scores])
+
+        if name == "mlsum":
+            for metric in ["rouge1", "rouge2", "rougeL"]:
+                fig, ax = plt.subplots()
+                for filtered in ["unfiltered", "filtered"]:
+                    seaborn.histplot(plot_scores[filtered][metric], bins=20, stat="count",
+                                     kde=False, binrange=(0, 1), ax=ax)
+                ax.set(xlim=(0, 1))
+                # TODO: How to automatically detect whether the maximum is larger?
+                ax.set(ylim=(0, 1500))
+
+                plt.savefig(f"mlsum_{metric}.png", dpi=300)
+                plt.show()
