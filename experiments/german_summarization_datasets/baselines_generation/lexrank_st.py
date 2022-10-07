@@ -58,7 +58,8 @@ if __name__ == '__main__':
                 average_ratio = np.mean(ratios)
 
                 generated_summaries = []
-                for doc in tqdm(nlp.pipe(reference_texts)):
+                for reference in tqdm(reference_texts):
+                    doc = nlp(reference)
                     sentences = [sent.text for sent in doc.sents]
                     # Approximate the target length based on average compression. Min length is one sentence.
                     target_length = max(round(len(sentences) / average_ratio), 1)
