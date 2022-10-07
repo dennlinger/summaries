@@ -29,7 +29,7 @@ def get_summarizer_pipeline(model_name: str, batch_size: int = 16):
 if __name__ == '__main__':
     model_names = [
         # "mrm8488/bert2bert_shared-german-finetuned-summarization",
-        "Shahm/t5-small-german",
+        # "Shahm/t5-small-german",
         "Einmalumdiewelt/T5-Base_GNAD",
         "ml6team/mt5-small-german-finetune-mlsum",
         "T-Systems-onsite/mt5-small-sum-de-en-v2",
@@ -41,9 +41,10 @@ if __name__ == '__main__':
     summary_column = "summary"
 
     eval_rouge_scores = True
+    batch_size = 16
 
     for model_name in model_names:
-        pipe = get_summarizer_pipeline(model_name, batch_size=16)
+        pipe = get_summarizer_pipeline(model_name, batch_size=batch_size)
 
         for do_filter in [False, True]:
             if do_filter:
