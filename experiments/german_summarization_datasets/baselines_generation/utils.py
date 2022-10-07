@@ -33,7 +33,7 @@ def get_dataset(name: str, filtered: bool = False):
         reference_column = "wiki_text"
         summary_column = "klexikon_text"
     elif "legalsum" in name:
-        base_path = "/home/dennis/LegalSum/"
+        base_path = "/home/daumiller/LegalSum/"
         train_files = load_split_files(os.path.join(base_path, "train_files.txt"))
         val_files = load_split_files(os.path.join(base_path, "val_files.txt"))
         test_files = load_split_files(os.path.join(base_path, "test_files.txt"))
@@ -68,7 +68,7 @@ def get_dataset(name: str, filtered: bool = False):
         reference_column = "reference"
         summary_column = "summary"
     elif "eurlexsum" in name:
-        with open("/home/dennis/german_eurlexsum/german_eurlexsum.json") as f:
+        with open("/home/aumiller/german_eurlexsum/german_eurlexsum.json") as f:
             data = json.load(f)
         data = {
             "train": extract_samples(data["train"]),
