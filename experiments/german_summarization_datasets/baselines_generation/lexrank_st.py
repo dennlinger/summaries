@@ -19,43 +19,56 @@ if __name__ == '__main__':
     nlp = get_nlp_model("sm", lang="de")
     analyzer = Analyzer(lemmatize=True, lang="de")
 
-    # MLSUM
-    name = "mlsum"
-    reference_column = "text"
-    summary_column = "summary"
-
-    for do_filter in [False, True]:
-        if do_filter:
-            filtered = "filtered"
+    # for name in ["mlsum", "klexikon", "legalsum", "eurlexsum"]:
+    for name in ["klexikon", "legalsum", "eurlexsum"]:
+        if name == "mlsum":
+            reference_column = "wiki_text"
+            summary_column = "klexikon_text"
+        elif name == "klexikon":
+            reference_column = "wiki_text"
+            summary_column = "klexikon_text"
+        elif name == "legalsum":
+            reference_column = "reference"
+            summary_column = "summary"
+        elif name == "eurlexsum":
+            reference_column = "reference_text"
+            summary_column = "summary_text"
         else:
-            filtered = "unfiltered"
+            raise ValueError("Not configured yet.")
 
-        data = get_dataset(name, filtered=do_filter)
+        # for do_filter in [False, True]:
+        for do_filter in [True]:
+            if do_filter:
+                filtered = "filtered"
+            else:
+                filtered = "unfiltered"
 
-        for split in ["validation", "test"]:
-            print(f"Computing {filtered} {split} split...")
-            samples = data[split]
-            # Extract reference texts only.
-            reference_texts = [sample[reference_column] for sample in samples]
-            summary_texts = [sample[summary_column] for sample in samples]
+            data = get_dataset(name, filtered=do_filter)
 
-            # Compute the compression ratios based on this
-            ratios = [analyzer.compression_ratio(summary, reference, "char")
-                      for summary, reference in zip(summary_texts, reference_texts)]
-            average_ratio = np.mean(ratios)
+            for split in ["validation", "test"]:
+                print(f"Computing {filtered} {split} split...")
+                samples = data[split]
+                # Extract reference texts only.
+                reference_texts = [sample[reference_column] for sample in samples]
+                summary_texts = [sample[summary_column] for sample in samples]
 
-            generated_summaries = []
-            for doc in tqdm(nlp.pipe(reference_texts)):
-                sentences = [sent.text for sent in doc.sents]
-                # Approximate the target length based on average compression. Min length is one sentence.
-                target_length = max(round(len(sentences) / average_ratio), 1)
-                generated_summaries.append(lexrank_st(sentences,
-                                                      st_model="paraphrase-multilingual-mpnet-base-v2",
-                                                      device="cuda:1",
-                                                      num_sentences=target_length))
+                # Compute the compression ratios based on this
+                ratios = [analyzer.compression_ratio(summary, reference, "char")
+                          for summary, reference in zip(summary_texts, reference_texts)]
+                average_ratio = np.mean(ratios)
 
-            with open(f"{name}_{split}_{filtered}_lexrank.json", "w") as f:
-                json.dump(generated_summaries, f, ensure_ascii=False, indent=2)
+                generated_summaries = []
+                for doc in tqdm(nlp.pipe(reference_texts)):
+                    sentences = [sent.text for sent in doc.sents]
+                    # Approximate the target length based on average compression. Min length is one sentence.
+                    target_length = max(round(len(sentences) / average_ratio), 1)
+                    generated_summaries.append(lexrank_st(sentences,
+                                                          st_model="paraphrase-multilingual-mpnet-base-v2",
+                                                          device="cuda:1",
+                                                          num_sentences=target_length))
 
-            if eval_rouge_scores:
-                get_rouge_scores(summary_texts, generated_summaries)
+                with open(f"{name}_{split}_{filtered}_lexrank.json", "w") as f:
+                    json.dump(generated_summaries, f, ensure_ascii=False, indent=2)
+
+                if eval_rouge_scores:
+                    get_rouge_scores(summary_texts, generated_summaries)
