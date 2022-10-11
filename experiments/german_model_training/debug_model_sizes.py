@@ -18,4 +18,4 @@ if __name__ == '__main__':
     model.to("cuda:1")
     sample.to("cuda:1")
 
-    result = model(**sample).to("cpu")
+    result = model(**sample)
