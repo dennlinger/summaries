@@ -17,13 +17,14 @@ if __name__ == '__main__':
     fast = False
 
     nlp = get_nlp_model("sm", lang="de")
+    nlp.max_length = 4_000_000
     analyzer = Analyzer(lemmatize=True, lang="de")
 
     # for name in ["mlsum", "klexikon", "legalsum", "eurlexsum"]:
-    for name in ["klexikon", "legalsum", "eurlexsum"]:
+    for name in ["mlsum"]:
         if name == "mlsum":
-            reference_column = "wiki_text"
-            summary_column = "klexikon_text"
+            reference_column = "text"
+            summary_column = "summary"
         elif name == "klexikon":
             reference_column = "wiki_text"
             summary_column = "klexikon_text"
