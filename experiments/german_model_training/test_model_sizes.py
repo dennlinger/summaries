@@ -10,8 +10,8 @@ if __name__ == '__main__':
     model = AutoModelForCausalLM.from_pretrained("benjamin/gerpt2-large")
 
     data = load_dataset("dennlinger/klexikon")
-
-    sample = tokenizer(data["train"][0], return_tensors="pt")
+    text = " ".join(sentence.strip("\n ") for sentence in data["train"][0]["wiki_sentences"])
+    sample = tokenizer(text, return_tensors="pt")
 
     model.to("cuda:1")
     sample.to("cuda:1")
