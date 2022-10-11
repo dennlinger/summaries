@@ -14,8 +14,8 @@ if __name__ == '__main__':
     sample = tokenizer(text, return_tensors="pt", max_length=1024, padding="longest", truncation=True)
     print(sample["input_ids"].shape)
 
-    model = AutoModelForCausalLM.from_pretrained("benjamin/gerpt2-large")
-    model.to("cuda:1")
-    sample.to("cuda:1")
-
-    result = model(**sample)
+    # model = AutoModelForCausalLM.from_pretrained("benjamin/gerpt2-large")
+    # model.to("cuda:1")
+    # sample.to("cuda:1")
+    #
+    # result = model(**sample).to("cpu")
