@@ -68,7 +68,7 @@ def get_dataset(name: str, filtered: bool = False):
         reference_column = "reference"
         summary_column = "summary"
     elif "eurlexsum" in name:
-        with open("/home/aumiller/german_eurlexsum/german_eurlexsum.json") as f:
+        with open("/home/daumiller/german_eurlexsum/german_eurlexsum.json") as f:
             data = json.load(f)
         data = {
             "train": extract_samples(data["train"]),
