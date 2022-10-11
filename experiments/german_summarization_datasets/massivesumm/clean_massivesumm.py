@@ -15,8 +15,9 @@ def custom_print_details(summary: str, reference: str, full_sample: Dict,
     Example of a print_details function implementation.
     This will print the reference and summary if the sample has been filtered out for any reason.
     """
-    if filter_reason is not None and len(summary) <= 20:
-        print(f"{full_sample}")
+    if filter_reason is not None:
+        if len(summary) <= 40 and len(reference) / len(summary) <= 1.0:
+            print(f"{full_sample}")
 
 
 if __name__ == '__main__':
@@ -42,8 +43,8 @@ if __name__ == '__main__':
     # # Alternative analysis that does not impose length requirements
     # cleaner = Cleaner(analyzer, extractiveness="fully")
 
-    clean_massivesumm = cleaner.clean_dataset("summary", "text", train, enable_tqdm=True)
+    # clean_massivesumm = cleaner.clean_dataset("summary", "text", train, enable_tqdm=True)
 
-    # # To investigate samples a bit more, you can additionally pass a function, as defined above:
-    # clean_massivesumm = cleaner.clean_dataset("summary", "text", train, enable_tqdm=True,
-    #                                           print_details=custom_print_details)
+    # To investigate samples a bit more, you can additionally pass a function, as defined above:
+    clean_massivesumm = cleaner.clean_dataset("summary", "text", train, enable_tqdm=True,
+                                              print_details=custom_print_details)
