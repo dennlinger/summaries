@@ -318,9 +318,6 @@ if __name__ == '__main__':
 
     debug = False
 
-    if debug:
-        max_samples_per_dataset = 5
-
     sample_template = {
         "uid": 0,
         "text": "This is the reference text",
@@ -410,13 +407,14 @@ if __name__ == '__main__':
                 joint_dataset.append(instance)
 
         if cleaned_dataset["validation"] is not None:
+            dataset_id = 1
             sample_size = min([1000, len(cleaned_dataset["validation"])])
             validation_samples = rng.choice(cleaned_dataset["validation"], sample_size, replace=False)
 
             for instance in validation_samples:
                 instance["uid"] = validation_uid
                 instance["dataset_id"] = f"{name}_{dataset_id}"
-                uid += 1
+                validation_uid += 1
                 dataset_id += 1
                 # Add the prompt text
                 instance["text"] = f"{prompt} {instance['text']}"
