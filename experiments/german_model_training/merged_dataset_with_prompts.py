@@ -23,7 +23,9 @@ to learn different summarization patterns across data. We use the following patt
 - Prompt: "Zusammenfassung Legislatur:"; Used sources: EUR-Lex-Sum
 
 We further use additional samples from each dataset to bake in respective behavior when querying without prompts.
-We randomly sample max(2000, 0.1 * num_samples) samples per dataset to balance the exposure to different domains.
+We randomly sample at most 2000 samples per dataset to balance the exposure to different domains.
+
+For validation sets, we similarly sample at most 1000 samples to keep sizes realistic.
 """
 
 import os
@@ -328,7 +330,9 @@ if __name__ == '__main__':
     rng = np.random.default_rng(seed=424242)
 
     joint_dataset = []
+    joint_validation = []
     uid = 1
+    validation_uid = 1
 
     for name in ["mlsum", "massivesumm", "wikilingua", "klexikon", "swisstext", "legalsum", "eurlexsum"]:
         if name == "mlsum":
@@ -374,7 +378,11 @@ if __name__ == '__main__':
 
             joint_dataset.append(instance)
 
-        # Then add the full (prompted) dataset as well
+        # Given the size, we add about the same amount of data as the MLSUM dataset contains.
+        if name == "massivesumm":
+            cleaned_dataset["train"] = rng.choice(cleaned_dataset["train"], 100_000, replace=False)
+
+        # Add the full (prompted) dataset as well
         dataset_id = 1
         if debug:
             cleaned_dataset["train"] = cleaned_dataset["train"][:5]
@@ -389,11 +397,38 @@ if __name__ == '__main__':
 
             joint_dataset.append(instance)
 
-        # TODO: If there is a validation set, add up to 1000 samples of that
+        if name == "klexikon":
+            dataset_id = 1
+            for instance in cleaned_dataset["train"]:
+                instance["uid"] = uid
+                instance["dataset_id"] = f"{name}_second_prompt_{dataset_id}"
+                uid += 1
+                dataset_id += 1
+                # Add the prompt text
+                instance["text"] = instance['text'].replace(prompt, "Zusammenfassung Wikipedia:")
 
-        # TODO: Add the mixin of different datasets for similar prompt types
+                joint_dataset.append(instance)
+
+        if cleaned_dataset["validation"] is not None:
+            sample_size = min([1000, len(cleaned_dataset["validation"])])
+            validation_samples = rng.choice(cleaned_dataset["validation"], sample_size, replace=False)
+
+            for instance in validation_samples:
+                instance["uid"] = validation_uid
+                instance["dataset_id"] = f"{name}_{dataset_id}"
+                uid += 1
+                dataset_id += 1
+                # Add the prompt text
+                instance["text"] = f"{prompt} {instance['text']}"
+
+                joint_validation.append(instance)
 
     with open("german_summarization.jsonl", "w") as f:
         for instance in joint_dataset:
+            json.dump(instance, f, ensure_ascii=False)
+            f.write("\n")
+
+    with open("german_summarization_validation.jsonl", "w") as f:
+        for instance in joint_validation:
             json.dump(instance, f, ensure_ascii=False)
             f.write("\n")
