@@ -32,7 +32,6 @@ import os
 import json
 import regex
 from typing import Set, List, Dict, Tuple
-<<<<<<< HEAD
 
 from datasets import load_dataset
 from tqdm import tqdm
@@ -429,6 +428,5 @@ if __name__ == '__main__':
 
     with open("german_summarization_validation.jsonl", "w") as f:
         for instance in joint_validation:
-
             json.dump(instance, f, ensure_ascii=False)
             f.write("\n")
