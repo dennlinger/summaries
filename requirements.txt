@@ -5,7 +5,7 @@ matplotlib
 seaborn
 rouge-score
 transformers>=4.15
-datasets>=2.6.0
+datasets
 sentence-transformers
 torch
 numpy
