@@ -84,7 +84,7 @@ if __name__ == '__main__':
         max_length = 256
         summary_max_length = 128
     else:
-        model_name = "google/mt5-base"
+        model_name = "google/mt5-small"
         max_length = 768
         summary_max_length = 512
 
