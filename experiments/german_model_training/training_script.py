@@ -38,8 +38,8 @@ def get_args(debug: bool = False) -> Seq2SeqTrainingArguments:
             save_strategy="no",
             seed=768,
             data_seed=512,
-            fp16=True,  # Could also use fp16 for Ampere+ GPUs!
-            fp16_full_eval=True,
+            bf16=True,  # experimental feature, doesn't work on our Titan RTX GPUs!
+            bf16_full_eval=True,
             optim="adamw_torch",
             gradient_checkpointing=False,  # Experiment with memory saves?
         )
@@ -54,7 +54,7 @@ def get_args(debug: bool = False) -> Seq2SeqTrainingArguments:
             auto_find_batch_size=True,
             # per_device_train_batch_size=4,
             per_device_eval_batch_size=4,
-            gradient_accumulation_steps=4,
+            gradient_accumulation_steps=2,
             # eval_accumulation_steps=20,
             # eval_delay=0.5,
             learning_rate=5e-5,
@@ -66,8 +66,8 @@ def get_args(debug: bool = False) -> Seq2SeqTrainingArguments:
             save_strategy="epoch",
             seed=768,
             data_seed=512,
-            fp16=True,  # Could also use fp16 for Ampere+ GPUs!
-            fp16_full_eval=True,
+            bf16=True,  # experimental feature, doesn't work on our Titan RTX GPUs!
+            bf16_full_eval=True,
             run_name="Mega German Summarization",
             optim="adamw_torch",
             gradient_checkpointing=False,  # Experiment with memory saves?
@@ -83,12 +83,10 @@ if __name__ == '__main__':
         model_name = "google/mt5-small"
         max_length = 256
         summary_max_length = 128
-        CUDA_VISIBLE_DEVICES = 1
     else:
         model_name = "google/mt5-base"
         max_length = 768
         summary_max_length = 512
-        CUDA_VISIBLE_DEVICES = 1
 
     tokenizer = AutoTokenizer.from_pretrained(model_name, model_max_length=max_length, use_fast=False)
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
