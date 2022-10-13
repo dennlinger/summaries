@@ -38,8 +38,8 @@ def get_args(debug: bool = False) -> Seq2SeqTrainingArguments:
             save_strategy="no",
             seed=768,
             data_seed=512,
-            bf16=True,  # experimental feature, doesn't work on our Titan RTX GPUs!
-            bf16_full_eval=True,
+            # bf16=True,  # experimental feature, doesn't work on our Titan RTX GPUs!
+            # bf16_full_eval=True,
             optim="adamw_torch",
             gradient_checkpointing=False,  # Experiment with memory saves?
         )
@@ -59,15 +59,15 @@ def get_args(debug: bool = False) -> Seq2SeqTrainingArguments:
             # eval_delay=0.5,
             learning_rate=5e-5,
             num_train_epochs=7,
-            lr_scheduler_type="linear_with_warmup",
+            lr_scheduler_type="linear",
             warmup_steps=5000,  # roughly equivalent to 1/6 of the first epoch
             logging_strategy="steps",
             logging_steps=250,
             save_strategy="epoch",
             seed=768,
             data_seed=512,
-            bf16=True,  # experimental feature, doesn't work on our Titan RTX GPUs!
-            bf16_full_eval=True,
+            # bf16=True,  # experimental feature, doesn't work on our Titan RTX GPUs!
+            # bf16_full_eval=True,
             run_name="Mega German Summarization",
             optim="adamw_torch",
             gradient_checkpointing=False,  # Experiment with memory saves?
@@ -77,14 +77,14 @@ def get_args(debug: bool = False) -> Seq2SeqTrainingArguments:
 
 
 if __name__ == '__main__':
-    debug = True
+    debug = False
 
     if debug:
         model_name = "google/mt5-small"
         max_length = 256
         summary_max_length = 128
     else:
-        model_name = "google/mt5-base"
+        model_name = "google/mt5-small"
         max_length = 768
         summary_max_length = 512
 
