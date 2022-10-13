@@ -83,12 +83,10 @@ if __name__ == '__main__':
         model_name = "google/mt5-small"
         max_length = 256
         summary_max_length = 128
-        CUDA_VISIBLE_DEVICES = 1
     else:
         model_name = "google/mt5-base"
         max_length = 768
         summary_max_length = 512
-        CUDA_VISIBLE_DEVICES = 1
 
     tokenizer = AutoTokenizer.from_pretrained(model_name, model_max_length=max_length, use_fast=False)
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
