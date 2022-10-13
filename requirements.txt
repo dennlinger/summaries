@@ -13,6 +13,7 @@ scipy
 tqdm
 protobuf
 nltk
+accelerate
 
 # Used in debugging
 # pke<=2.0
