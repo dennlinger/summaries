@@ -207,7 +207,7 @@ def print_aggregate(result: Dict, fast: bool = False) -> None:
 
 
 if __name__ == '__main__':
-    model_path = "/home/dennis/checkpoint-46895"
+    model_path = "/home/daumiller/checkpoint-46895"
     model_name = "German-MultiSumm-base"
     dataset_name = "mlsum"
     reference_column = "text"
