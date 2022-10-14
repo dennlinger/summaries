@@ -12,7 +12,7 @@ from datasets import load_dataset
 from nltk.stem.cistem import Cistem
 from rouge_score.rouge_scorer import RougeScorer
 from rouge_score.scoring import BootstrapAggregator
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 
 from summaries import Analyzer, Cleaner
 
@@ -216,6 +216,7 @@ if __name__ == '__main__':
 
     tokenizer = AutoTokenizer.from_pretrained(model_path, fast=False)
     model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
+    pipe = pipeline("summarization", model=model, tokenizer=tokenizer)
 
     dataset = get_dataset(dataset_name, filtered=True)
 
@@ -223,14 +224,15 @@ if __name__ == '__main__':
         print(f"Computing {filtered} {split} split...")
         samples = dataset[split]
 
-        reference_texts = [sample[reference_column] for sample in samples]
+        prompt = "Zusammenfassung News:"
+        reference_texts = [f"{prompt} {sample[reference_column]}" for sample in samples]
         summary_texts = [sample[summary_column].replace("\n", " ") for sample in samples]
 
         generated_summaries = []
         print(f"Generating spacy docs for each summary...")
         for reference in tqdm(reference_texts):
             # TODO
-            summary = None
+            summary = pipe(reference, max_length=256)
             generated_summaries.append(summary)
 
         with open(f"{dataset_name}_{split}_{filtered}_{model_name}.json", "w") as f:
