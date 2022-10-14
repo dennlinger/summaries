@@ -9,6 +9,7 @@ from functools import lru_cache
 
 from tqdm import tqdm
 from datasets import load_dataset
+from torch.utils.data import Dataset
 from nltk.stem.cistem import Cistem
 from rouge_score.rouge_scorer import RougeScorer
 from rouge_score.scoring import BootstrapAggregator
@@ -206,17 +207,28 @@ def print_aggregate(result: Dict, fast: bool = False) -> None:
               f"${result['rougeL'].mid.fmeasure * 100:5.2f}$")
 
 
+class ListDataset(Dataset):
+    def __init__(self, original_list):
+        self.original_list = original_list
+
+    def __len__(self):
+        return len(self.original_list)
+
+    def __getitem__(self, i):
+        return self.original_list[i]
+
+
 if __name__ == '__main__':
-    model_path = "/home/daumiller/checkpoint-46895"
+    model_path = "/home/daumiller/checkpoint"
     model_name = "German-MultiSumm-base"
     dataset_name = "mlsum"
     reference_column = "text"
     summary_column = "summary"
     filtered = "filtered"
 
-    tokenizer = AutoTokenizer.from_pretrained(model_path, fast=False)
+    tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
     model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
-    pipe = pipeline("summarization", model=model, tokenizer=tokenizer)
+    pipe = pipeline("summarization", model=model, tokenizer=tokenizer, device=0)
     dataset = get_dataset(dataset_name, filtered=True)
 
     for split in ["validation", "test"]:
@@ -227,12 +239,11 @@ if __name__ == '__main__':
         reference_texts = [f"{prompt} {sample[reference_column]}" for sample in samples]
         summary_texts = [sample[summary_column].replace("\n", " ") for sample in samples]
 
+        reference_ds = ListDataset(reference_texts)
         generated_summaries = []
-        print(f"Generating spacy docs for each summary...")
-        for reference in tqdm(reference_texts):
-            # TODO
-            summary = pipe(reference, max_length=256)
-            generated_summaries.append(summary)
+        for summaries in tqdm(pipe(reference_ds, max_length=256, batch_size=2)):
+            summaries = [generated_sample["summary_text"] for generated_sample in summaries]
+            generated_summaries.extend(summaries)
 
         with open(f"{dataset_name}_{split}_{filtered}_{model_name}.json", "w") as f:
             json.dump(generated_summaries, f, ensure_ascii=False, indent=2)
