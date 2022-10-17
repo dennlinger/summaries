@@ -59,6 +59,7 @@ if __name__ == '__main__':
                 print(f"Generating spacy docs for each summary...")
                 for reference in tqdm(reference_texts):
                     doc = nlp(reference)
+                    # Clean up empty sentence fragments left over from spacy.
                     sentences = [sent.text.strip("\n ") for sent in doc.sents if sent.text.strip("\n ") != ""]
 
                     generated_summaries.append(lead_3(sentences))
