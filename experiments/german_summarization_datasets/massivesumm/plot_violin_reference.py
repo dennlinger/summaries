@@ -12,7 +12,6 @@ from summaries.preprocessing import Cleaner
 
 if __name__ == '__main__':
 
-
     # Set correct font size
     matplotlib.rc('xtick', labelsize=18)
     matplotlib.rc('ytick', labelsize=18)
@@ -40,17 +39,11 @@ if __name__ == '__main__':
                       length_metric="char", min_length_summary=20, min_length_reference=50,
                       min_compression_ratio=1.25,
                       extractiveness="fully")
-    # # Alternative analysis that does not impose length requirements
-    # cleaner = Cleaner(analyzer, extractiveness="fully")
 
     clean_massivesumm = cleaner.clean_dataset("summary", "text", train, enable_tqdm=True)
 
     dirty_lengths_massive = [len(sample["text"]) for sample in train]
     clean_lengths_massive = [len(sample["text"]) for sample in clean_massivesumm["train"]]
-
-
-    # dirty_reference_lengths = [len(sample["text"]) for sample in train]
-    # clean_reference_lengths = [len(sample["text"]) for sample in clean_massivesumm["train"]]
 
     del clean_massivesumm
 
@@ -74,9 +67,10 @@ if __name__ == '__main__':
     df["Dataset"] = ["MassiveSumm" for _ in range(len(clean_lengths_massive) + len(dirty_lengths_massive))] + \
                     ["MLSUM" for _ in range(len(clean_lengths_mlsum) + len(dirty_lengths_mlsum))]
 
+    # Given that we have a hard time plotting longer samples in context, filter the data beforehand.
     df = df[df["Sample Lengths"] <= 10000]
     ax = sns.violinplot(data=df, x="Dataset", y="Sample Lengths", hue="Reference Text", split=True, gridsize=2500,
-                   showmeans=True, scale="count", cut=0, inner="quartile", dodge=0.6, palette="colorblind")
+                        showmeans=True, scale="count", cut=0, inner="quartile", dodge=0.6, palette="colorblind")
     plt.ylim([0, 9000])
     ax.set(xlabel=None)
     ax.set(ylabel=None)
