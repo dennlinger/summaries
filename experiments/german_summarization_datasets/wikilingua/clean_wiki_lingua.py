@@ -31,6 +31,7 @@ if __name__ == '__main__':
     train = expand_samples(dataset["train"])
 
     analyzer = Analyzer(lemmatize=True, lang="de")
+    # Use slightly shorter filtering method, given that instructions are much shorter than regular summaries.
     cleaner = Cleaner(analyzer, deduplication_method="test_first",
                       min_length_summary=5, min_length_reference=20, length_metric="char",
                       min_compression_ratio=1.25,
@@ -38,8 +39,7 @@ if __name__ == '__main__':
 
     clean_data = cleaner.clean_dataset("summary", "document", train, enable_tqdm=True)
 
-
-    # # GEM/wiki_lingua version
+    # FIXME: Uncomment to learn about stats of the GEM/wiki_lingua version.
     # dataset = load_dataset("GEM/wiki_lingua", "de")
     #
     # analyzer = Analyzer(lemmatize=True, lang="de")
