@@ -1,5 +1,6 @@
 """
-Our dataset!
+Dataset cleaning of the EUR-Lex-Sum dataset by Aumiller et al.
+The dataset can be online: https://huggingface.co/datasets/dennlinger/eur-lex-sum
 """
 
 import json
@@ -15,6 +16,7 @@ def extract_samples(split):
 
 
 if __name__ == '__main__':
+    # For the offline experiments, we utilize the pre-releaesd version of our dataset.
     with open("/home/dennis/german_eurlexsum/german_eurlexsum.json") as f:
         dataset = json.load(f)
     train = extract_samples(dataset["train"])
