@@ -28,8 +28,8 @@ def get_summarizer_pipeline(model_name: str, batch_size: int = 16):
 
 if __name__ == '__main__':
     model_names = [
-        # "mrm8488/bert2bert_shared-german-finetuned-summarization",
-        # "Shahm/t5-small-german",
+        "mrm8488/bert2bert_shared-german-finetuned-summarization",
+        "Shahm/t5-small-german",
         "Einmalumdiewelt/T5-Base_GNAD",
         "ml6team/mt5-small-german-finetune-mlsum",
         "T-Systems-onsite/mt5-small-sum-de-en-v2",
@@ -40,7 +40,10 @@ if __name__ == '__main__':
     reference_column = "text"
     summary_column = "summary"
 
+    # If enabled, will perform ROUGE score computation
     eval_rouge_scores = True
+    # Given the hardware budget, the batch size can be increased/decreased;
+    # generally 16 should work with the length of MLSUM samples for moderately capable GPUs (16 GB)
     batch_size = 16
 
     for model_name in model_names:

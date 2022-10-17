@@ -17,8 +17,7 @@ if __name__ == '__main__':
     fast = False
     nlp = get_nlp_model("sm", lang="de")
     nlp.max_length = 4_000_000
-    # for name in ["mlsum", "klexikon", "legalsum", "eurlexsum"]:
-    for name in ["mlsum"]:
+    for name in ["mlsum", "klexikon", "legalsum", "eurlexsum"]:
         if name == "mlsum":
             reference_column = "text"
             summary_column = "summary"
@@ -39,8 +38,7 @@ if __name__ == '__main__':
             "unfiltered": {"rouge1": [], "rouge2": [], "rougeL": []}
         }
 
-        # for do_filter in [False, True]:
-        for do_filter in [True]:
+        for do_filter in [False, True]:
             if do_filter:
                 filtered = "filtered"
             else:
@@ -52,6 +50,8 @@ if __name__ == '__main__':
                 print(f"Computing {filtered} {split} split...")
                 samples = data[split]
 
+                # The assumptions about training samples are relatively minimal:
+                # We simply replace newlines with spaces for the summary text.
                 reference_texts = [sample[reference_column] for sample in samples]
                 summary_texts = [sample[summary_column].replace("\n", " ") for sample in samples]
 
