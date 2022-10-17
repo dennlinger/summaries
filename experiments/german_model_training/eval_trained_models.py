@@ -242,7 +242,7 @@ if __name__ == '__main__':
 
         reference_ds = ListDataset(reference_texts)
         generated_summaries = []
-        for summaries in tqdm(pipe(reference_ds, max_length=256, batch_size=2)):
+        for summaries in tqdm(pipe(reference_ds, max_length=256, batch_size=16)):
             summaries = [generated_sample["summary_text"] for generated_sample in summaries]
             generated_summaries.extend(summaries)
 
