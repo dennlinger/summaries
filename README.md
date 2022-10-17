@@ -7,7 +7,7 @@ Heidelberg University
 During development you can install this framework by following the steps below:
 
 1. Clone this github repository: `git clone https://github.com/dennlinger/summaries.git`
-2. Navigate to the repository folder, and install all necessary dependencies: `python3 -m pip install -r requirements`
+2. Navigate to the repository folder, and install all necessary dependencies: `python3 -m pip install -r requirements.txt` 
 3. Set up the library with `python3 -m pip install .`. If you want an automatically updated development version, you can also add `-e` to the command.
 
 You can now import the library with `import summaries`
