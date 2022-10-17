@@ -1,0 +1,14 @@
+Filtering with 1.25 min CR:
+
+1504 samples were removed from the dataset.
+Breakdown by filter category:
+'reference_too_short': {'train': 11, 'validation': 0, 'test': 0} samples removed across splits.
+'summary_too_short': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+'identity_sample': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+'compression_ratio': {'train': 1435, 'validation': 0, 'test': 0} samples removed across splits.
+'extractiveness': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+'exact_duplicate': {'train': 4, 'validation': 0, 'test': 0} samples removed across splits.
+'both_duplicate': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+'summary_duplicate': {'train': 52, 'validation': 0, 'test': 0} samples removed across splits.
+'reference_duplicate': {'train': 2, 'validation': 0, 'test': 0} samples removed across splits.
+& train & $58341$ & $11$ & $0$ & $0$ & $1435$ & $0$ & $4$ & $2$ & $52$ & $56837$ & $(97.42\%)$ \\

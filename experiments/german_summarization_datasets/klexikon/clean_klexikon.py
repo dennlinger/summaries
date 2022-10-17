@@ -34,6 +34,7 @@ if __name__ == '__main__':
 
     analyzer = Analyzer(lemmatize=True, lang="de")
     cleaner = Cleaner(analyzer, min_length_summary=20, min_length_reference=50, length_metric="char",
+                      min_compression_ratio=1.25,
                       # extractiveness=(0.10, 0.90))
                       extractiveness="fully")
 

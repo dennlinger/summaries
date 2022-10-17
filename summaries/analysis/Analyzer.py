@@ -6,16 +6,12 @@ or simply checking for the amount of overlap with a reference text.
 """
 from typing import Optional, List, Union, Tuple
 from collections import Counter
-import warnings
 
 from rouge_score.rouge_scorer import _create_ngrams, _score_lcs, _score_ngrams
 from spacy.language import Language
-import matplotlib.pyplot as plt
 from datasets import Dataset
-from seaborn import histplot
-from tqdm import tqdm
 
-from ..utils import get_nlp_model, interpret_lang_code, find_closest_reference_matches
+from ..utils import get_nlp_model, interpret_lang_code
 
 
 class Analyzer:
@@ -56,51 +52,6 @@ class Analyzer:
             self.processor = get_nlp_model("sm", lang=lang_code)
         else:
             self.processor = processor
-
-    def density_plot(self, references: List[List[str]], summaries: List[List[str]], out_fn: Optional[str] = None,
-                     max_num_bins: int = 100) -> None:
-        """
-        Generates density plots based on normalized position of reference sentences. A density
-        :param references: List of reference texts, split into sentences.
-        :param summaries: List of summaries; can be either gold or system summaries. Split into sentences.
-        :param out_fn: File name where to store the plot. Will only store the plot if `out_fn` is provided.
-        :param max_num_bins: Maximum number of bins to use in the resulting plot.
-        :return: No output, but resulting plot will be saved to disk if `out_fn` is specified.
-        """
-
-        reference_positions = []
-        max_article_length = 0
-        for reference_doc, summary_doc in tqdm(zip(references, summaries)):
-
-            # Need maximum length to determine lower bound of bins in histogram
-            if len(list(reference_doc)) > max_article_length:
-                max_article_length = len(list(reference_doc))
-
-            # FIXME: Currently does not respect the self.lemmatize option!
-            warnings.warn("`density_plot` currently does not respect the choice of `Analyzer.lemmatize`"
-                          "and will always lemmatize!")
-            # Compute likely source-target alignments
-            reference_positions.extend(find_closest_reference_matches(summary_doc, reference_doc, 2, self.processor))
-
-        self._generate_plot(reference_positions, min(max_num_bins, max_article_length), out_fn)
-
-    @staticmethod
-    def _generate_plot(positions: List[float], bins: int, out_fn: Union[None, str]):
-        """
-        Auxiliary wrapper function for the density plots
-        """
-        plt.figure()
-        # Simple hack to only plot a KDE if there are "sufficient" samples available.
-        if len(positions) > 10:
-            plot_kde = True
-        else:
-            plot_kde = False
-        ax = histplot(positions, bins=bins, stat="probability", kde=plot_kde, binrange=(0, 1))
-        ax.set(xlim=(0, 1))
-        ax.set(ylim=(0, 0.25))
-        if out_fn:
-            plt.savefig(out_fn, dpi=200)
-        plt.show()
 
     def analyze_dataset(self,
                         reference_text_column_name: str,
@@ -220,7 +171,7 @@ class Analyzer:
 
     def is_summary_longer_than_reference(self, summary: str, reference: str, length_metric: str = "char") -> bool:
         """
-        Checks whether a particular sample has a longer summary than reference, indicating a compression ratio <= 1.0.
+        Checks whether a particular sample has a longer summary than reference, indicated by a compression ratio <= 1.0.
         This is a frequent sanity check for quality of samples. Also note that we flag samples that are the exact
         same length. This can happen in rare instances, where the samples are the exact same text.
         :param summary: Summary text.
@@ -231,23 +182,42 @@ class Analyzer:
             between "proper" tokenization and approximations.
         :return: Will return a boolean indicating whether the summary is longer than the reference.
         """
-
-        if length_metric == "char":
-            length_summary = len(summary)
-            length_reference = len(reference)
-        elif length_metric == "whitespace":
-            length_summary = len(summary.split(" "))
-            length_reference = len(reference.split(" "))
-        elif length_metric == "token":
-            length_summary = len(self._get_tokens(summary))
-            length_reference = len(self._get_tokens(reference))
-        else:
-            raise ValueError(f"Unexpected length metric passed! Supported length metrics: {self.valid_length_methods}")
-
-        if length_summary >= length_reference:
+        compression_ratio = self.compression_ratio(summary, reference, length_metric)
+        if compression_ratio <= 1.0:
             return True
         else:
             return False
+
+    def compression_ratio(self, summary: str, reference: str, length_metric: str = "char") -> float:
+        """
+        Computes the compression ratio between a given summary and reference text.
+        :param summary: Summary text.
+        :param reference: Reference text.
+        :param length_metric: Can be either of "char", "whitespace" or "token".
+        :return: Will return the compression ratio length_metric(reference) / length_metric(summary).
+        """
+        length_summary = self._get_length(summary, length_metric)
+        length_reference = self._get_length(reference, length_metric)
+        # TODO: Given that this currently throws an error, we might want to change it to a warning?
+        if length_reference == 0:
+            raise ZeroDivisionError("Empty reference text would cause ZeroDivisionError!")
+        return length_reference / length_summary
+
+    def _get_length(self, text: str, length_metric: str) -> int:
+        """
+        Compute the length of a given summary and reference under a particular length metric.
+        :param text: Input text
+        :param length_metric: Can be either of "char", "whitespace" or "token".
+        :return: Returns the lengths of the summary and reference text, respectively.
+        """
+        if length_metric == "char":
+            return len(text)
+        elif length_metric == "whitespace":
+            return len(text.split(" "))
+        elif length_metric == "token":
+            return len(self._get_tokens(text))
+        else:
+            raise ValueError(f"Unexpected length metric passed! Supported length metrics: {self.valid_length_methods}")
 
     def is_text_too_short(self, text: str, min_length: int, length_metric: str = "char") \
             -> bool:
@@ -262,15 +232,7 @@ class Analyzer:
             between "proper" tokenization and approximations.
         :return: Will return a boolean indicating whether the text is too short or not.
         """
-
-        if length_metric == "char":
-            text_length = len(text)
-        elif length_metric == "whitespace":
-            text_length = len(text.split(" "))
-        elif length_metric == "token":
-            text_length = len(self._get_tokens(text))
-        else:
-            raise ValueError(f"Unexpected length metric passed! Supported length metrics: {self.valid_length_methods}")
+        text_length = self._get_length(text, length_metric)
 
         if text_length >= min_length:
             return False

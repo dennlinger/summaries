@@ -1,0 +1,44 @@
+96 files were not assigned to any portion.
+
+79937 samples are in the train set.
+Of these, 60600 had text in the first guiding principle (75.81%).
+18347 had text in the second principle (22.95%). 990 had both sections (1.24%).
+9992 samples are in the validation set.
+Of these, 7623 had text in the first guiding principle (76.29%).
+2248 had text in the second principle (22.50%). 121 had both sections (1.21%).
+9993 samples are in the test set.
+Of these, 7653 had text in the first guiding principle (76.58%).
+2206 had text in the second principle (22.08%). 134 had both sections (1.34%).
+
+
+There are quite a few special characters in the dataset, including some \x.. Unicode stuff.
+However, I did not filter out anything beyond \xa0, which represents a space char.
+
+
+4084 samples were removed from the dataset.
+Breakdown by filter category:
+'reference_too_short': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+'summary_too_short': {'train': 2, 'validation': 0, 'test': 0} samples removed across splits.
+'identity_sample': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+'longer_summary': {'train': 8, 'validation': 3, 'test': 4} samples removed across splits.
+'extractiveness': {'train': 326, 'validation': 32, 'test': 33} samples removed across splits.
+'exact_duplicate': {'train': 226, 'validation': 14, 'test': 8} samples removed across splits.
+'both_duplicate': {'train': 7, 'validation': 0, 'test': 0} samples removed across splits.
+'summary_duplicate': {'train': 3107, 'validation': 157, 'test': 59} samples removed across splits.
+'reference_duplicate': {'train': 95, 'validation': 2, 'test': 1} samples removed across splits.
+
+With 1.25 min CR:
+4091 samples were removed from the dataset.
+Breakdown by filter category:
+'reference_too_short': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+'summary_too_short': {'train': 2, 'validation': 0, 'test': 0} samples removed across splits.
+'identity_sample': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+'compression_ratio': {'train': 12, 'validation': 4, 'test': 7} samples removed across splits.
+'extractiveness': {'train': 326, 'validation': 32, 'test': 33} samples removed across splits.
+'exact_duplicate': {'train': 226, 'validation': 14, 'test': 8} samples removed across splits.
+'both_duplicate': {'train': 7, 'validation': 0, 'test': 0} samples removed across splits.
+'summary_duplicate': {'train': 3106, 'validation': 157, 'test': 59} samples removed across splits.
+'reference_duplicate': {'train': 95, 'validation': 2, 'test': 1} samples removed across splits.
+& train & $79937$ & $0$ & $2$ & $0$ & $12$ & $326$ & $233$ & $95$ & $3106$ & $76163$ & $(95.28\%)$ \\
+& validation & $9992$ & $0$ & $0$ & $0$ & $4$ & $32$ & $14$ & $2$ & $157$ & $9783$ & $(97.91\%)$ \\
+& test & $9993$ & $0$ & $0$ & $0$ & $7$ & $33$ & $8$ & $1$ & $59$ & $9885$ & $(98.92\%)$ \\
