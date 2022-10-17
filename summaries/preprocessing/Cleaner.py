@@ -11,11 +11,13 @@ from datasets import Dataset
 from ..analysis import Analyzer
 
 
+
 class Cleaner:
     analyzer: Analyzer
     deduplication_method: str
-    min_length_reference: int
+    min_compression_ratio: float
     min_length_summary: int
+    min_length_reference: int
     length_metric: str
     extractiveness: Optional[Union[Tuple[float, float], str]]
 
@@ -23,6 +25,7 @@ class Cleaner:
     def __init__(self,
                  analyzer: Optional[Analyzer] = None,
                  deduplication_method: str = "test_first",
+                 min_compression_ratio: float = 1.0,
                  min_length_summary: int = 0,
                  min_length_reference: int = 0,
                  length_metric: str = "char",
@@ -34,6 +37,8 @@ class Cleaner:
             * "first", which will retain the first sample with a particular text, and discard other duplicates or leaks,
             * "test_first", which will reverse the order of passed sets from (train, val, test) to (test, val, train),
             * "none", which will perform no duplicate filtering.
+        :param min_compression_ratio: Minimum compression ratio (len(reference)/len(summary) that should be ensured.
+            1.0 means summaries have to be strictly shorter than the references.
         :param min_length_summary: Minimum length of the summary text (see `length_metric`).
         :param min_length_reference: Minimum length of the reference text (see `length_metric`).
         :param length_metric: Which way to calculate lengths (either one of ["char", "whitespace", "token"]).
@@ -62,9 +67,17 @@ class Cleaner:
             raise ValueError(f"Supplied length method is invalid! "
                              f"Supported length methods: {self.analyzer.valid_length_methods}")
         self.length_metric = length_metric
-        self.min_length_reference = min_length_reference
+        if min_compression_ratio < 0.0:
+            raise ValueError("The minimum compression ratio must be greater or equal to zero!")
+        elif min_compression_ratio < 1.0:
+            warnings.warn("The currently set minimum compression ratio allows summaries longer than the reference!")
+        self.min_compression_ratio = min_compression_ratio
+        if min_length_reference < 0 or min_length_summary < 0:
+            raise ValueError("Please provide a positive integer (or zero) for the minimum length!")
         self.min_length_summary = min_length_summary
+        self.min_length_reference = min_length_reference
 
+        # Determine the input type of the extractiveness parameter
         if extractiveness is not None:
             if isinstance(extractiveness, tuple):
                 if extractiveness[0] < 0.0 or extractiveness[1] > 1.0:
@@ -88,7 +101,7 @@ class Cleaner:
                       test_set: Optional[Union[List[Dict], Dataset]] = None,
                       print_details: Optional[Callable] = None,
                       enable_tqdm: bool = False,
-                      print_breakdown: bool = True) -> Tuple[List, List, List]:
+                      print_breakdown: bool = True) -> Dict:
         """
         Function that removes samples based on the available Analyzer module. By default, removes the following:
             - Samples with incompatible lengths (summary longer than reference)
@@ -104,8 +117,8 @@ class Cleaner:
             condition to inspect samples that will be filtered on specific criteria.
         :param enable_tqdm: Will show a progress bar if enabled.
         :param print_breakdown: If enabled, will output a breakdown of where samples were filtered.
-        :return: Returns a tuple of (cleaned_train, cleaned_val, cleaned_test),
-            where each of those is a list of samples that satisfy all filtering criteria.
+        :return: Returns a Dict of ("train": cleaned_train, "validation": cleaned_val, "test": cleaned_test),
+            where each of those is a list of samples that satisfy all filtering criteria (or None, if none was passed).
         """
 
         passed_sets = self.analyzer.get_passed_splits_with_names(train_set, validation_set, test_set)
@@ -126,7 +139,7 @@ class Cleaner:
         filter_count_with_reason = {"reference_too_short": {"train": 0, "validation": 0, "test": 0},
                                     "summary_too_short": {"train": 0, "validation": 0, "test": 0},
                                     "identity_sample": {"train": 0, "validation": 0, "test": 0},
-                                    "longer_summary": {"train": 0, "validation": 0, "test": 0},
+                                    "compression_ratio": {"train": 0, "validation": 0, "test": 0},
                                     "extractiveness": {"train": 0, "validation": 0, "test": 0},
                                     "exact_duplicate": {"train": 0, "validation": 0, "test": 0},
                                     "both_duplicate": {"train": 0, "validation": 0, "test": 0},
@@ -178,11 +191,10 @@ class Cleaner:
                     filter_reason = "identity_sample"
                     filter_count_with_reason[filter_reason][split_name] += 1
                     continue
-                # TODO: Introduce parameter that determines whether this is a filtering criterion
-                if self.analyzer.is_summary_longer_than_reference(current_summary,
-                                                                  current_reference,
-                                                                  length_metric=self.length_metric):
-                    filter_reason = "longer_summary"
+                # Filter based on the compression ratio
+                if self.analyzer.compression_ratio(current_summary, current_reference, self.length_metric) < \
+                   self.min_compression_ratio:
+                    filter_reason = "compression_ratio"
                     filter_count_with_reason[filter_reason][split_name] += 1
                     continue
                 # If no range for the similarities is specified, no need to check it.
@@ -207,7 +219,6 @@ class Cleaner:
                         filter_reason = "exact_duplicate"
                         filter_count_with_reason[filter_reason][split_name] += 1
                         continue
-
                     elif current_reference in previously_seen_references and \
                             current_summary in previously_seen_summaries:
                         filter_reason = "both_duplicate"
@@ -243,9 +254,30 @@ class Cleaner:
             for reason, count in filter_count_with_reason.items():
                 print(f"'{reason}': {count} samples removed across splits.")
 
+            if train_set is not None:
+                format_print(train_set, filter_count_with_reason, "train", cleaned_splits)
+            if validation_set is not None:
+                format_print(validation_set, filter_count_with_reason, "validation", cleaned_splits)
+            if test_set is not None:
+                format_print(test_set, filter_count_with_reason, "test", cleaned_splits)
+
         # FIXME: Currently "converts" Huggingface dataset inputs to List-based outputs for simplicity of internal
         #  handling, since we otherwise have to differentiate at some point.
-        return cleaned_splits["train"], cleaned_splits["validation"], cleaned_splits["test"]
+        return cleaned_splits
+
+
+def format_print(split, filter_count_with_reason, split_name, cleaned_splits):
+    print(f"& {split_name} & ${len(split)}$ & "
+          f"${filter_count_with_reason['reference_too_short'][split_name]}$ & "
+          f"${filter_count_with_reason['summary_too_short'][split_name]}$ & "
+          f"${filter_count_with_reason['identity_sample'][split_name]}$ & "
+          f"${filter_count_with_reason['compression_ratio'][split_name]}$ & "
+          f"${filter_count_with_reason['extractiveness'][split_name]}$ & "
+          f"${filter_count_with_reason['exact_duplicate'][split_name] + filter_count_with_reason['both_duplicate'][split_name]}$ & "
+          f"${filter_count_with_reason['reference_duplicate'][split_name]}$ & "
+          f"${filter_count_with_reason['summary_duplicate'][split_name]}$ & "
+          f"${len(cleaned_splits[split_name])}$ & "
+          f"$({len(cleaned_splits[split_name]) / len(split) * 100:.2f}\\%)$ \\\\")
 
 
 def example_print_details(summary: str, reference: str, full_sample: Dict,

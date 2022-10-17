@@ -1,2 +1,2 @@
-from .lead import lead3_baseline, leadk_baseline
-from .lexrank_st import lexrank_st_baseline
+from .lead import lead_3, lead_k
+from .lexrank_st import lexrank_st

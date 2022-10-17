@@ -2,3 +2,8 @@
 __pycache__/
 examples/klexikon/overfit_models/
 summaries.egg-info/
+
+# Particular experiment files
+experiments/german_summarization_datasets/baselines_generation/results/*.json
+experiments/german_summarization_datasets/baselines_generation/*.json
+experiments/german_summarization_datasets/mlsum/*.json
