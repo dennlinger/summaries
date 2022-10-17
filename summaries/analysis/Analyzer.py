@@ -198,6 +198,7 @@ class Analyzer:
         """
         length_summary = self._get_length(summary, length_metric)
         length_reference = self._get_length(reference, length_metric)
+        # TODO: Given that this currently throws an error, we might want to change it to a warning?
         if length_reference == 0:
             raise ZeroDivisionError("Empty reference text would cause ZeroDivisionError!")
         return length_reference / length_summary

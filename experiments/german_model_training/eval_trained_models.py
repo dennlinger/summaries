@@ -158,7 +158,7 @@ def get_rouge_scorer_with_cistem(fast=False):
         scorer = RougeScorer(["rouge1", "rouge2"], use_stemmer=True)
     else:
         scorer = RougeScorer(["rouge1", "rouge2", "rougeL"], use_stemmer=True)
-    stemmer = Cistem(case_insensitive=True)  # Insensitive because RougeScorer lowercases anyways.
+    stemmer = Cistem(case_insensitive=True)  # Insensitive because RougeScorer lowercases anyway.
     scorer._stemmer = stemmer  # Certainly not best practice, but better than re-writing the package ;-)
 
     return scorer
@@ -173,6 +173,7 @@ def get_rouge_scores(gold_summaries: List[str], system_predictions: List[str], f
         raise ValueError(f"Something went wrong when generating summaries: "
                          f"Found {len(gold_summaries)} samples and "
                          f"{len(system_predictions)} generated texts.")
+    print("Computing ROUGE scores...")
     for gold, prediction in tqdm(zip(gold_summaries, system_predictions)):
         aggregator.add_scores(scorer.score(gold, prediction))
 
@@ -219,7 +220,7 @@ class ListDataset(Dataset):
 
 
 if __name__ == '__main__':
-    model_path = "/home/daumiller/checkpoint"
+    model_path = "/home/dennis/checkpoint-55759"
     model_name = "German-MultiSumm-base"
     dataset_name = "mlsum"
     reference_column = "text"
@@ -229,7 +230,6 @@ if __name__ == '__main__':
     tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
     model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
     pipe = pipeline("summarization", model=model, tokenizer=tokenizer, device=0)
-
     dataset = get_dataset(dataset_name, filtered=True)
 
     for split in ["validation", "test"]:
@@ -240,11 +240,14 @@ if __name__ == '__main__':
         reference_texts = [f"{prompt} {sample[reference_column]}" for sample in samples]
         summary_texts = [sample[summary_column].replace("\n", " ") for sample in samples]
 
-        reference_ds = ListDataset(reference_texts)
         generated_summaries = []
-        for summaries in tqdm(pipe(reference_ds, max_length=256, batch_size=16)):
-            summaries = [generated_sample["summary_text"] for generated_sample in summaries]
-            generated_summaries.extend(summaries)
+        # TODO: Fix this stupid batching method, and implement it myself.
+        # FIXME: Also verify that input texts are actually trimmed to 768 tokens. Based on memory consumption,
+        #  it does not seem to be the case.
+
+        summaries = pipe(reference_texts, max_length=256, batch_size=64, truncation=True)
+        summaries = [generated_sample["summary_text"] for generated_sample in summaries]
+        generated_summaries.extend(summaries)
 
         with open(f"{dataset_name}_{split}_{filtered}_{model_name}.json", "w") as f:
             json.dump(generated_summaries, f, ensure_ascii=False, indent=2)

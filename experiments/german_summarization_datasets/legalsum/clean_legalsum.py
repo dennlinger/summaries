@@ -1,5 +1,6 @@
 """
-What
+Processing script for the LegalSum dataset by Glaser et al.
+Code and download links associated with the original dataset can be found here: https://github.com/sebimo/LegalSum
 """
 
 import os
@@ -19,6 +20,12 @@ def load_split_files(fp: str) -> Set:
 
 
 def construct_sample_from_data(data: Dict, fn: str) -> Dict:
+    """
+    The actual reference-summary tuple is spread across multiple fields in the original dataset.
+    :param data: Dataframe of a single sample.
+    :param fn: File name which will be stored as an additional attribute for future reference.
+    :return: Structured sample in parseable format.
+    """
     # Sentence-based storage requires unfolding
     facts = "\n".join([line.strip("\n ") for line in data["facts"]])
     reasoning = "\n".join([line.strip("\n ") for line in data["reasoning"]])
@@ -44,6 +51,10 @@ def construct_sample_from_data(data: Dict, fn: str) -> Dict:
 
 
 def get_which_guiding_portion(data: Dict) -> str:
+    """
+    This is a brief analysis of the sources for which guiding portions are present.
+    The original authors are not 100% clear on where exactly they are from.
+    """
     guiding_principle = data["guiding_principle"]
     if len(guiding_principle) != 2:
         raise ValueError(f"Sample has different guiding principle structure:\n{guiding_principle}")
@@ -85,9 +96,6 @@ if __name__ == '__main__':
     guide_test = []
     guide_unused = []
 
-    # reference_counter = Counter()
-    # summary_counter = Counter()
-
     for fn in tqdm(os.listdir(os.path.join(base_path, "data/"))):
         fp = os.path.join(base_path, "data/", fn)
 
@@ -107,10 +115,6 @@ if __name__ == '__main__':
             guide_test.append(get_which_guiding_portion(data))
         else:
             unused_samples.append(sample)
-            # guide_unused.append(get_which_guiding_portion(data))
-
-        # reference_counter += Counter(sample["reference"])
-        # summary_counter += Counter(sample["summary"])
 
     print(f"{len(unused_samples)} files were not assigned to any portion.")
     print_split(train, guide_train, "train")
@@ -121,7 +125,7 @@ if __name__ == '__main__':
     cleaner = Cleaner(analyzer, deduplication_method="test_first",
                       min_length_summary=20, min_length_reference=50, length_metric="char",
                       min_compression_ratio=1.25,
-                      # extractiveness=(0.10, 0.90))
+                      # extractiveness=(0.10, 0.90))  # Takes super long...
                       extractiveness="fully")
 
     clean_dataset = cleaner.clean_dataset("summary", "reference", train, validation, test, enable_tqdm=True)

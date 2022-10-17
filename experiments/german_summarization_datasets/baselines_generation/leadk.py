@@ -17,13 +17,13 @@ if __name__ == '__main__':
     fast = False
 
     nlp = get_nlp_model("sm", lang="de")
+    nlp.max_length = 4_000_000
     analyzer = Analyzer(lemmatize=True, lang="de")
 
-    # for name in ["mlsum", "klexikon", "legalsum", "eurlexsum"]:
-    for name in ["klexikon", "legalsum", "eurlexsum"]:
+    for name in ["mlsum", "klexikon", "legalsum", "eurlexsum"]:
         if name == "mlsum":
-            reference_column = "wiki_text"
-            summary_column = "klexikon_text"
+            reference_column = "text"
+            summary_column = "summary"
         elif name == "klexikon":
             reference_column = "wiki_text"
             summary_column = "klexikon_text"
@@ -36,8 +36,7 @@ if __name__ == '__main__':
         else:
             raise ValueError("Not configured yet.")
 
-    # for do_filter in [False, True]:
-        for do_filter in [True]:
+        for do_filter in [False, True]:
             if do_filter:
                 filtered = "filtered"
             else:
@@ -50,6 +49,7 @@ if __name__ == '__main__':
                 samples = data[split]
                 # Extract reference texts only.
                 reference_texts = [sample[reference_column] for sample in samples]
+                # Similarly, replace newlines in the target summaries
                 summary_texts = [sample[summary_column].replace("\n", " ") for sample in samples]
 
                 # Compute the compression ratios based on this
@@ -60,6 +60,7 @@ if __name__ == '__main__':
                 generated_summaries = []
                 for reference in tqdm(reference_texts):
                     doc = nlp(reference)
+                    # Remove empty sentences that can alternatively be selected as a "target sentence"
                     sentences = [sent.text.strip("\n ") for sent in doc.sents if sent.text.strip("\n ") != ""]
 
                     # Approximate the target length based on average compression

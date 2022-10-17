@@ -1,7 +1,6 @@
 """
 Utility functions used across experiments
 """
-from functools import lru_cache
 from typing import List, Dict, Set
 import json
 import os
@@ -15,10 +14,20 @@ from nltk.stem.cistem import Cistem
 from summaries import Analyzer, Cleaner
 
 
-@lru_cache(maxsize=4)
 def get_dataset(name: str, filtered: bool = False):
+    """
+    Loads one of the German summarization datasets, with optional filtering.
+    As a distinction from other loading functions in this library, this is only able to load those datasets
+    that have a dedicated validation/test set ("mlsum", "klexikon", "eurlexsum", "legalsum").
+    Contains hard-coded paths for datasets that are only available offline.
+    Download links can be found in the respective comments for datasets.
+    :param name: Name of the dataset. Has to be either one of ("mlsum", "klexikon", "eurlexsum", "legalsum").
+    :param filtered: Whether the dataset should be filtered. Currently, does not allow for any further specification.
+    :return: The samples of a filtered dataset.
+    """
     if name == "mlsum":
         data = load_dataset("mlsum", "de")
+        # Names of the relevant columns have to be given to work with the filtering method.
         reference_column = "text"
         summary_column = "summary"
     elif "klexikon" in name:
@@ -33,6 +42,7 @@ def get_dataset(name: str, filtered: bool = False):
         reference_column = "wiki_text"
         summary_column = "klexikon_text"
     elif "legalsum" in name:
+        # Download link for data can be found here: https://github.com/sebimo/LegalSum
         base_path = "/home/daumiller/LegalSum/"
         train_files = load_split_files(os.path.join(base_path, "train_files.txt"))
         val_files = load_split_files(os.path.join(base_path, "val_files.txt"))
@@ -42,9 +52,10 @@ def get_dataset(name: str, filtered: bool = False):
         validation = []
         test = []
 
+        # Iterate through files and assign them to the respective splits.
+        # The file containing the assignments is provided by the original dataset authors.
         for fn in tqdm(os.listdir(os.path.join(base_path, "data/"))):
             fp = os.path.join(base_path, "data/", fn)
-
             with open(fp) as f:
                 data = json.load(f)
             sample = construct_sample_from_data(data, fn)
@@ -68,7 +79,8 @@ def get_dataset(name: str, filtered: bool = False):
         reference_column = "reference"
         summary_column = "summary"
     elif "eurlexsum" in name:
-        with open("/home/aumiller/german_eurlexsum/german_eurlexsum.json") as f:
+        # Download link will be added shortly
+        with open("/home/daumiller/german_eurlexsum/german_eurlexsum.json") as f:
             data = json.load(f)
         data = {
             "train": extract_samples(data["train"]),
