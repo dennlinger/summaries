@@ -7,3 +7,5 @@ summaries.egg-info/
 experiments/german_summarization_datasets/baselines_generation/results/*.json
 experiments/german_summarization_datasets/baselines_generation/*.json
 experiments/german_summarization_datasets/mlsum/*.json
+experiments/german_model_training/*.jsonl
+experiments/german_model_training/**/*.bin
