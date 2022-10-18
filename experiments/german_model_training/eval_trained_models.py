@@ -177,7 +177,7 @@ if __name__ == '__main__':
 
     tokenizer = AutoTokenizer.from_pretrained(args.model_path, use_fast=False)
     model = AutoModelForSeq2SeqLM.from_pretrained(args.model_path)
-    pipe = pipeline("summarization", model=model, tokenizer=tokenizer)# , device=0)
+    pipe = pipeline("summarization", model=model, tokenizer=tokenizer, device=0)
     dataset = get_dataset(dataset_name, filtered=True)
 
     for split in ["validation", "test"]:
