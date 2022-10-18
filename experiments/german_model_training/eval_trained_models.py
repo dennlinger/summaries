@@ -6,6 +6,7 @@ import os
 import json
 from typing import Dict, Set
 from functools import lru_cache
+from argparse import Namespace, ArgumentParser
 
 from tqdm import tqdm
 from datasets import load_dataset
@@ -153,18 +154,28 @@ def batch_generator(iterable, batch_size):
         yield current_batch
 
 
+def get_args() -> Namespace:
+    parser = ArgumentParser()
+    parser.add_argument("model_path", type=str,
+                        help="Path to, or name of, a model checkpoint.")
+    parser.add_argument("--output-name", type=str, default="German-MultiSumm",
+                        help="Name to use in the output file for the model name.")
+    parser.add_argument("--batch-size", type=int, default=16,
+                        help="Batch size to use during evaluation.")
+
+    return args.parse_args()
+
+
 if __name__ == '__main__':
-    model_path = "/home/dennis/checkpoint-55759"
-    model_name = "German-MultiSumm-base"
     dataset_name = "mlsum"
     reference_column = "text"
     summary_column = "summary"
-
     filtered = "filtered"
-    batch_size = 16
 
-    tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
-    model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
+    args = get_args()
+
+    tokenizer = AutoTokenizer.from_pretrained(args.model_path, use_fast=False)
+    model = AutoModelForSeq2SeqLM.from_pretrained(args.model_path)
     pipe = pipeline("summarization", model=model, tokenizer=tokenizer, device=0)
     dataset = get_dataset(dataset_name, filtered=True)
 
@@ -181,12 +192,12 @@ if __name__ == '__main__':
         # FIXME: Also verify that input texts are actually trimmed to 768 tokens. Based on memory consumption,
         #  it does not seem to be the case.
 
-        for batch in batch_generator(reference_texts, batch_size=batch_size):
-            summaries = pipe(reference_texts, max_length=256, batch_size=batch_size, truncation=True)
+        for batch in batch_generator(reference_texts, batch_size=args.batch_size):
+            summaries = pipe(reference_texts, max_length=256, batch_size=args.batch_size, truncation=True)
             summaries = [generated_sample["summary_text"] for generated_sample in summaries]
             generated_summaries.extend(summaries)
 
-        with open(f"{dataset_name}_{split}_{filtered}_{model_name}.json", "w") as f:
+        with open(f"{dataset_name}_{split}_{filtered}_{args.model_name}.json", "w") as f:
             json.dump(generated_summaries, f, ensure_ascii=False, indent=2)
 
         # Compute Rouge scores
