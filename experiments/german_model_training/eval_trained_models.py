@@ -198,7 +198,7 @@ if __name__ == '__main__':
             summaries = [generated_sample["summary_text"] for generated_sample in summaries]
             generated_summaries.extend(summaries)
 
-        with open(f"{dataset_name}_{split}_{filtered}_{args.model_name}.json", "w") as f:
+        with open(f"{dataset_name}_{split}_{filtered}_{args.output_name}.json", "w") as f:
             json.dump(generated_summaries, f, ensure_ascii=False, indent=2)
 
         # Compute Rouge scores
