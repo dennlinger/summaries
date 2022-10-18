@@ -10,6 +10,7 @@ from argparse import Namespace, ArgumentParser
 
 from tqdm import tqdm
 from datasets import load_dataset
+from torch.utils.data import Dataset
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 
 from summaries import Analyzer, Cleaner
@@ -176,7 +177,7 @@ if __name__ == '__main__':
 
     tokenizer = AutoTokenizer.from_pretrained(args.model_path, use_fast=False)
     model = AutoModelForSeq2SeqLM.from_pretrained(args.model_path)
-    pipe = pipeline("summarization", model=model, tokenizer=tokenizer, device=0)
+    pipe = pipeline("summarization", model=model, tokenizer=tokenizer)# , device=0)
     dataset = get_dataset(dataset_name, filtered=True)
 
     for split in ["validation", "test"]:
@@ -193,8 +194,7 @@ if __name__ == '__main__':
         #  it does not seem to be the case.
 
         for batch in tqdm(batch_generator(reference_texts, batch_size=args.batch_size)):
-            summaries = pipe(reference_texts, max_length=256, batch_size=args.batch_size,
-                             padding="longest", truncation=True)
+            summaries = pipe(batch, max_length=256, batch_size=args.batch_size, truncation=True)
             summaries = [generated_sample["summary_text"] for generated_sample in summaries]
             generated_summaries.extend(summaries)
 
