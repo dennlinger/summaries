@@ -4,18 +4,15 @@ This uses the models with available datasets.
 """
 import os
 import json
-from typing import Dict, Set, List
+from typing import Dict, Set
 from functools import lru_cache
 
 from tqdm import tqdm
 from datasets import load_dataset
-from torch.utils.data import Dataset
-from nltk.stem.cistem import Cistem
-from rouge_score.rouge_scorer import RougeScorer
-from rouge_score.scoring import BootstrapAggregator
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 
 from summaries import Analyzer, Cleaner
+from summaries.evaluation import get_rouge_scorer, compute_rouge_scores
 
 
 @lru_cache(maxsize=4)
@@ -145,78 +142,15 @@ def construct_sample_from_data(data: Dict, fn: str) -> Dict:
     return sample
 
 
-# The following implementation is borrowed from the Klexikon paper repository (Aumiller and Gertz, 2022):
-# https://github.com/dennlinger/klexikon
-def get_rouge_scorer_with_cistem(fast=False):
-    """
-    Replaces the standard Porter stemmer, which works best on English, with the Cistem stemmer, which was specifically
-    designed for the German language.
-    :return: RougeScorer object with replaced stemmer.
-    """
-    # Skip LCS computation for 10x speedup during debugging.
-    if fast:
-        scorer = RougeScorer(["rouge1", "rouge2"], use_stemmer=True)
-    else:
-        scorer = RougeScorer(["rouge1", "rouge2", "rougeL"], use_stemmer=True)
-    stemmer = Cistem(case_insensitive=True)  # Insensitive because RougeScorer lowercases anyway.
-    scorer._stemmer = stemmer  # Certainly not best practice, but better than re-writing the package ;-)
-
-    return scorer
-
-
-def get_rouge_scores(gold_summaries: List[str], system_predictions: List[str], fast=False) -> BootstrapAggregator:
-    scorer = get_rouge_scorer_with_cistem(fast=fast)
-    aggregator = BootstrapAggregator(confidence_interval=0.95, n_samples=2000)
-
-    print("Computing ROUGE scores...")
-    if len(gold_summaries) != len(system_predictions):
-        raise ValueError(f"Something went wrong when generating summaries: "
-                         f"Found {len(gold_summaries)} samples and "
-                         f"{len(system_predictions)} generated texts.")
-    print("Computing ROUGE scores...")
-    for gold, prediction in tqdm(zip(gold_summaries, system_predictions)):
-        aggregator.add_scores(scorer.score(gold, prediction))
-
-    result = aggregator.aggregate()
-    print_aggregate(result, fast)
-
-    return aggregator
-
-
-def print_aggregate(result: Dict, fast: bool = False) -> None:
-    for key, value_set in result.items():
-        print(f"----------------{key} ---------------------")
-        print(f"Precision | "
-              f"low: {value_set.low.precision * 100:5.2f}, "
-              f"mid: {value_set.mid.precision * 100:5.2f}, "
-              f"high: {value_set.high.precision * 100:5.2f}")
-        print(f"Recall    | "
-              f"low: {value_set.low.recall * 100:5.2f}, "
-              f"mid: {value_set.mid.recall * 100:5.2f}, "
-              f"high: {value_set.high.recall * 100:5.2f}")
-        print(f"F1        | "
-              f"low: {value_set.low.fmeasure * 100:5.2f}, "
-              f"mid: {value_set.mid.fmeasure * 100:5.2f}, "
-              f"high: {value_set.high.fmeasure * 100:5.2f}")
-        print(f"--------------------------------------------")
-        print(f"{key} F1: {value_set.mid.fmeasure * 100:5.2f}")
-
-    # Necessary to avoid KeyError for RougeL
-    if not fast:
-        print(f"${result['rouge1'].mid.fmeasure * 100:5.2f}$ & "
-              f"${result['rouge2'].mid.fmeasure * 100:5.2f}$ & "
-              f"${result['rougeL'].mid.fmeasure * 100:5.2f}$")
-
-
-class ListDataset(Dataset):
-    def __init__(self, original_list):
-        self.original_list = original_list
-
-    def __len__(self):
-        return len(self.original_list)
-
-    def __getitem__(self, i):
-        return self.original_list[i]
+def batch_generator(iterable, batch_size):
+    current_batch = []
+    for item in iterable:
+        current_batch.append(item)
+        if len(current_batch) == batch_size:
+            yield current_batch
+            current_batch = []
+    if current_batch:
+        yield current_batch
 
 
 if __name__ == '__main__':
@@ -225,7 +159,9 @@ if __name__ == '__main__':
     dataset_name = "mlsum"
     reference_column = "text"
     summary_column = "summary"
+
     filtered = "filtered"
+    batch_size = 16
 
     tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
     model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
@@ -245,14 +181,17 @@ if __name__ == '__main__':
         # FIXME: Also verify that input texts are actually trimmed to 768 tokens. Based on memory consumption,
         #  it does not seem to be the case.
 
-        summaries = pipe(reference_texts, max_length=256, batch_size=64, truncation=True)
-        summaries = [generated_sample["summary_text"] for generated_sample in summaries]
-        generated_summaries.extend(summaries)
+        for batch in batch_generator(reference_texts, batch_size=batch_size):
+            summaries = pipe(reference_texts, max_length=256, batch_size=batch_size, truncation=True)
+            summaries = [generated_sample["summary_text"] for generated_sample in summaries]
+            generated_summaries.extend(summaries)
 
         with open(f"{dataset_name}_{split}_{filtered}_{model_name}.json", "w") as f:
             json.dump(generated_summaries, f, ensure_ascii=False, indent=2)
 
-        aggregator = get_rouge_scores(summary_texts, generated_summaries)
+        # Compute Rouge scores
+        scorer = get_rouge_scorer(stemmer="cistem")
+        aggregator = compute_rouge_scores(summary_texts, generated_summaries, scorer)
 
 
 
