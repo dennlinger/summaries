@@ -192,7 +192,7 @@ if __name__ == '__main__':
         # FIXME: Also verify that input texts are actually trimmed to 768 tokens. Based on memory consumption,
         #  it does not seem to be the case.
 
-        for batch in batch_generator(reference_texts, batch_size=args.batch_size):
+        for batch in tqdm(batch_generator(reference_texts, batch_size=args.batch_size)):
             summaries = pipe(reference_texts, max_length=256, batch_size=args.batch_size, truncation=True)
             summaries = [generated_sample["summary_text"] for generated_sample in summaries]
             generated_summaries.extend(summaries)
