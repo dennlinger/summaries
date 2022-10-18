@@ -193,7 +193,8 @@ if __name__ == '__main__':
         #  it does not seem to be the case.
 
         for batch in tqdm(batch_generator(reference_texts, batch_size=args.batch_size)):
-            summaries = pipe(reference_texts, max_length=256, batch_size=args.batch_size, truncation=True)
+            summaries = pipe(reference_texts, max_length=256, batch_size=args.batch_size,
+                             padding="longest", truncation=True)
             summaries = [generated_sample["summary_text"] for generated_sample in summaries]
             generated_summaries.extend(summaries)
 
