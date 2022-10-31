@@ -4,8 +4,8 @@ This simplifies the training to basically determining hyperparameters.
 """
 
 from transformers import (
-    AutoModelForSeq2SeqLM,
     AutoModelForCausalLM,
+    AutoModelForSeq2SeqLM,
     AutoTokenizer,
     Seq2SeqTrainer,
     Seq2SeqTrainingArguments,
@@ -81,19 +81,19 @@ if __name__ == '__main__':
     debug = True
 
     if debug:
-        model_name = "benjamin/gerpt2"
+        model_name = "google/mt5-small"
         max_length = 256
         summary_max_length = 128
     else:
-        model_name = "benjamin/gerpt2"
+        model_name = "google/mt5-base"
         max_length = 768
         summary_max_length = 512
 
     tokenizer = AutoTokenizer.from_pretrained(model_name, model_max_length=max_length, use_fast=False)
     # Enable this for T5-based models
-    # model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
     # Enable this for GPT-based models
-    model = AutoModelForCausalLM.from_pretrained(model_name)
+    # model = AutoModelForCausalLM.from_pretrained(model_name)
 
     # Adapted from Jing's practical code
     def tokenize_function(samples):
