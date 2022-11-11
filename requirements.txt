@@ -1,6 +1,6 @@
 yake
 spacy>=3.4
-https://github.com/explosion/spacy-models/releases/download/de_core_news_sm-3.4.0/de_core_news_sm-3.4.0.tar.gzegg=de_core_news_sm
+https://github.com/explosion/spacy-models/releases/download/de_core_news_sm-3.4.0/de_core_news_sm-3.4.0.tar.gz#egg=de_core_news_sm
 matplotlib
 seaborn
 rouge-score
