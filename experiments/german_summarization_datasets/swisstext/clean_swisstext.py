@@ -13,7 +13,7 @@ from summaries import Analyzer, Cleaner
 
 
 if __name__ == '__main__':
-    base_path = "/home/dennis/swisstext/"
+    base_path = "./"
 
     train_set = pd.read_csv(os.path.join(base_path, "data_train.csv"), delimiter=",").to_dict("records")
     # The test set only contains the text, not the summaries...

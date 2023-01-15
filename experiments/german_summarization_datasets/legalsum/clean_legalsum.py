@@ -81,7 +81,7 @@ def print_split(split: List[Dict], guide_split: List[str], split_name: str):
 
 
 if __name__ == '__main__':
-    base_path = "/home/dennis/LegalSum/"
+    base_path = "./"
     train_files = load_split_files(os.path.join(base_path, "train_files.txt"))
     val_files = load_split_files(os.path.join(base_path, "val_files.txt"))
     test_files = load_split_files(os.path.join(base_path, "test_files.txt"))
@@ -96,8 +96,8 @@ if __name__ == '__main__':
     guide_test = []
     guide_unused = []
 
-    for fn in tqdm(os.listdir(os.path.join(base_path, "data/"))):
-        fp = os.path.join(base_path, "data/", fn)
+    for fn in tqdm(os.listdir(os.path.join(base_path, "LegalSum/"))):
+        fp = os.path.join(base_path, "LegalSum/", fn)
 
         with open(fp) as f:
             data = json.load(f)

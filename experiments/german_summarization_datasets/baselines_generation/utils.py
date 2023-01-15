@@ -43,7 +43,7 @@ def get_dataset(name: str, filtered: bool = False):
         summary_column = "klexikon_text"
     elif "legalsum" in name:
         # Download link for data can be found here: https://github.com/sebimo/LegalSum
-        base_path = "/home/daumiller/LegalSum/"
+        base_path = "../legalsum/"
         train_files = load_split_files(os.path.join(base_path, "train_files.txt"))
         val_files = load_split_files(os.path.join(base_path, "val_files.txt"))
         test_files = load_split_files(os.path.join(base_path, "test_files.txt"))
@@ -54,8 +54,8 @@ def get_dataset(name: str, filtered: bool = False):
 
         # Iterate through files and assign them to the respective splits.
         # The file containing the assignments is provided by the original dataset authors.
-        for fn in tqdm(os.listdir(os.path.join(base_path, "data/"))):
-            fp = os.path.join(base_path, "data/", fn)
+        for fn in tqdm(os.listdir(os.path.join(base_path, "LegalSum/"))):
+            fp = os.path.join(base_path, "LegalSum/", fn)
             with open(fp) as f:
                 data = json.load(f)
             sample = construct_sample_from_data(data, fn)
@@ -80,7 +80,7 @@ def get_dataset(name: str, filtered: bool = False):
         summary_column = "summary"
     elif "eurlexsum" in name:
         # Download link will be added shortly
-        with open("/home/daumiller/german_eurlexsum/german_eurlexsum.json") as f:
+        with open("../eurlexsum/german_eurlexsum.json") as f:
             data = json.load(f)
         data = {
             "train": extract_samples(data["train"]),
