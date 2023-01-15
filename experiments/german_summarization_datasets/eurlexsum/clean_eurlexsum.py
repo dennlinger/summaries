@@ -4,6 +4,7 @@ The dataset can be online: https://huggingface.co/datasets/dennlinger/eur-lex-su
 """
 
 import json
+import os
 
 from summaries import Analyzer, Cleaner
 
@@ -17,7 +18,8 @@ def extract_samples(split):
 
 if __name__ == '__main__':
     # For the offline experiments, we utilize the pre-releaesd version of our dataset.
-    with open("./german_eurlexsum.json") as f:
+    data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "german_eurlexsum.json")
+    with open(data_path) as f:
         dataset = json.load(f)
     train = extract_samples(dataset["train"])
     validation = extract_samples(dataset["validation"])

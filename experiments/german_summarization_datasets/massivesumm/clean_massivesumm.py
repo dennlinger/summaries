@@ -3,6 +3,7 @@ Applying cleaner to Massivesumm.
 """
 from typing import Dict
 import json
+import os
 
 from summaries.analysis import Analyzer
 from summaries.preprocessing import Cleaner
@@ -21,7 +22,7 @@ def custom_print_details(summary: str, reference: str, full_sample: Dict,
 
 
 if __name__ == '__main__':
-    data_path = "./deu.all.jsonl"
+    data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "deu.all.jsonl")
 
     train = []
     # The data is in JSONL format

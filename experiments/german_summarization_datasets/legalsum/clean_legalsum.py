@@ -81,7 +81,7 @@ def print_split(split: List[Dict], guide_split: List[str], split_name: str):
 
 
 if __name__ == '__main__':
-    base_path = "./"
+    base_path = os.path.dirname(os.path.realpath(__file__))
     train_files = load_split_files(os.path.join(base_path, "train_files.txt"))
     val_files = load_split_files(os.path.join(base_path, "val_files.txt"))
     test_files = load_split_files(os.path.join(base_path, "test_files.txt"))

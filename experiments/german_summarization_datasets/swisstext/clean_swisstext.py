@@ -13,7 +13,7 @@ from summaries import Analyzer, Cleaner
 
 
 if __name__ == '__main__':
-    base_path = "./"
+    base_path = os.path.dirname(os.path.realpath(__file__))
 
     train_set = pd.read_csv(os.path.join(base_path, "data_train.csv"), delimiter=",").to_dict("records")
     # The test set only contains the text, not the summaries...
