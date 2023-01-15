@@ -3,6 +3,7 @@ Generates two-sided violin plot of the MLSUM and Massivesumm datasets before and
 This script generates the plots for reference texts.
 """
 import json
+import os
 
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -24,7 +25,7 @@ if __name__ == '__main__':
     matplotlib.rcParams['font.family'] = 'STIXGeneral'
 
     #MassiveSumm
-    data_path = "/home/dennis/massivesumm/deu.all.jsonl"
+    data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "massivesumm", "deu.all.jsonl")
 
     train = []
     # The data is in JSONL format
@@ -82,4 +83,4 @@ if __name__ == '__main__':
     ax.set(ylabel=None)
     plt.legend(loc="upper center", prop={'size': 18})
     plt.savefig("violins_reference.png", dpi=400)
-    plt.show()
+    # plt.show()

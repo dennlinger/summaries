@@ -43,7 +43,7 @@ def get_dataset(name: str, filtered: bool = False):
         summary_column = "klexikon_text"
     elif "legalsum" in name:
         # Download link for data can be found here: https://github.com/sebimo/LegalSum
-        base_path = "../legalsum/"
+        base_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../", "legalsum/")
         train_files = load_split_files(os.path.join(base_path, "train_files.txt"))
         val_files = load_split_files(os.path.join(base_path, "val_files.txt"))
         test_files = load_split_files(os.path.join(base_path, "test_files.txt"))
@@ -80,7 +80,8 @@ def get_dataset(name: str, filtered: bool = False):
         summary_column = "summary"
     elif "eurlexsum" in name:
         # Download link will be added shortly
-        with open("../eurlexsum/german_eurlexsum.json") as f:
+        path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../", "/eurlexsum/german_eurlexsum.json")
+        with open(path) as f:
             data = json.load(f)
         data = {
             "train": extract_samples(data["train"]),
