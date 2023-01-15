@@ -49,6 +49,7 @@ if __name__ == '__main__':
     dirty_lengths_massive = [len(sample["text"]) for sample in train]
     clean_lengths_massive = [len(sample["text"]) for sample in clean_massivesumm["train"]]
 
+    print(f"{len(dirty_lengths_massive)} vs {len(clean_lengths_massive)} after filtering.")
     del clean_massivesumm
 
     # MLSUM loading
@@ -67,14 +68,15 @@ if __name__ == '__main__':
 
     df = pd.DataFrame()
     df["Sample Lengths"] = dirty_lengths_massive + clean_lengths_massive + dirty_lengths_mlsum + clean_lengths_mlsum
-    df["Reference Text"] = dirty_type_massive + clean_type_massive + dirty_type_mlsum + clean_type_mlsum
+    df["Filtering"] = dirty_type_massive + clean_type_massive + dirty_type_mlsum + clean_type_mlsum
     df["Dataset"] = ["MassiveSumm" for _ in range(len(clean_lengths_massive) + len(dirty_lengths_massive))] + \
                     ["MLSUM" for _ in range(len(clean_lengths_mlsum) + len(dirty_lengths_mlsum))]
 
     # Given that we have a hard time plotting longer samples in context, filter the data beforehand.
     df = df[df["Sample Lengths"] <= 10000]
-    ax = sns.violinplot(data=df, x="Dataset", y="Sample Lengths", hue="Reference Text", split=True, gridsize=2500,
-                        showmeans=True, scale="count", cut=0, inner="quartile", dodge=0.6, palette="colorblind")
+    ax = sns.violinplot(data=df, x="Dataset", y="Sample Lengths", hue="Filtering", split=True, gridsize=2500,
+                        width=1.0, showmeans=True, scale="count", scale_hue=False,
+                        cut=0, inner="quartile", palette="colorblind") #, dodge=0.6, )
     plt.ylim([0, 9000])
     ax.set(xlabel=None)
     ax.set(ylabel=None)
