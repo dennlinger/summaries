@@ -3,6 +3,10 @@
 Author: Dennis Aumiller  
 Heidelberg University
 
+## Reproducibility of German Summarization Dataset Experiments
+Part of this library has been officially accepted as a long paper at BTW'23!
+If you are interested in reproducing the contents of this work, see the file `REPRODUCIBILITY.md`.
+
 ## Installation
 During development you can install this framework by following the steps below:
 
@@ -136,4 +140,18 @@ This method works similar in its strategy to the `RougeNAligner`, but instead us
 ## Extending or Supplying Own Components
 
 ## Citation
-TODO
+If you found this library useful, please consider citing the following work:
+
+```
+@inproceedings{aumiller-etal-2023-on,
+  author    = {Dennis Aumiller and
+               Jing Fan and
+               Michael Gertz},
+  title     = {{On the State of German (Abstractive) Text Summarization}},
+  booktitle = {Datenbanksysteme f{\"{u}}r Business, Technologie und Web {(BTW}
+               2023)},
+  series    = {{LNI}},
+  publisher = {Gesellschaft f{\"{u}}r Informatik, Bonn},
+  year      = {2023}
+}
+```
