@@ -17,7 +17,7 @@ def extract_samples(split):
 
 if __name__ == '__main__':
     # For the offline experiments, we utilize the pre-releaesd version of our dataset.
-    with open("/home/dennis/german_eurlexsum/german_eurlexsum.json") as f:
+    with open("./german_eurlexsum.json") as f:
         dataset = json.load(f)
     train = extract_samples(dataset["train"])
     validation = extract_samples(dataset["validation"])

@@ -21,7 +21,7 @@ def custom_print_details(summary: str, reference: str, full_sample: Dict,
 
 
 if __name__ == '__main__':
-    data_path = "/home/dennis/massivesumm/deu.all.jsonl"
+    data_path = "./deu.all.jsonl"
 
     train = []
     # The data is in JSONL format
