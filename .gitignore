@@ -7,3 +7,14 @@ summaries.egg-info/
 experiments/german_summarization_datasets/baselines_generation/results/*.json
 experiments/german_summarization_datasets/baselines_generation/*.json
 experiments/german_summarization_datasets/mlsum/*.json
+experiments/german_summarization_datasets/eurlexsum/german_eurlexsum.json
+experiments/german_summarization_datasets/legalsum/train_files.txt
+experiments/german_summarization_datasets/legalsum/val_files.txt
+experiments/german_summarization_datasets/legalsum/test_files.txt
+experiments/german_summarization_datasets/legalsum/LegalSum/
+experiments/german_summarization_datasets/massivesumm/deu.all.jsonl
+experiments/german_summarization_datasets/mlsum_rouge*.png
+experiments/german_summarization_datasets/mlsum_*.json
+experiments/german_summarization_datasets/swisstext/*.csv
+experiments/german_summarization_datasets/swisstext/baseline.py
+experiments/german_summarization_datasets/*violins_*
