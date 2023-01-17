@@ -15,7 +15,12 @@ Author: Dennis Aumiller
 Furthermore, this assumes you have Python3.7+ installed on your system.
 
 To reproduce the content necessary for the paper's experiments,
-simply install the library according to the `README.md`'s instructions:
+simply install the library according to the `README.md`'s instructions:  
+First, install the necessary dependencies with
+```bash
+python3 setup.py install
+```
+and then set up the library with `pip`:
 ```bash
 python3 -m pip install .
 ```
