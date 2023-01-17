@@ -14,6 +14,7 @@ install_requires = []
 if os.path.isfile(requirement_path):
     with open(requirement_path) as f:
         install_requires = f.read().splitlines()
+print(install_requires)
 
 # This call to setup() does all the work
 setup(
