@@ -1,7 +1,9 @@
 """
 Generates a list of relevant sentences in the source text that best align with a target summary's individual sentences.
-For this purposes, for each sentence a maximizing fragment (according to ROUGE-2) is chosen from the input text.
+For this purpose, for each sentence a maximizing fragment (according to ROUGE-2) is chosen from the input text.
 Currently only works for SDS cases (i.e., single reference text).
+This method differs from the implementation used in related work, which is primarily based on the method introduced by
+Nallapati et al. in their 2016 SummaRuNNer paper. Their method is implemented as the GreedyAligner in this library.
 """
 from typing import List
 
