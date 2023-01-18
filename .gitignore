@@ -18,3 +18,10 @@ experiments/german_summarization_datasets/mlsum_*.json
 experiments/german_summarization_datasets/swisstext/*.csv
 experiments/german_summarization_datasets/swisstext/baseline.py
 experiments/german_summarization_datasets/*violins_*
+
+
+# German model training
+experiments/german_model_training/*.jsonl
+experiments/german_model_training/**/*.bin
+experiments/german_model_training/**/*.pt
+experiments/german_model_training/**/runs/
