@@ -1,0 +1,14 @@
+CNN/DailyMail (HF datasets version 3.0.0)
+
+5380 samples were removed from the dataset.
+Breakdown by filter category:
+'reference_too_short': {'train': 1, 'validation': 0, 'test': 0} samples removed across splits.
+'summary_too_short': {'train': 1, 'validation': 0, 'test': 0} samples removed across splits.
+'identity_sample': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+'compression_ratio': {'train': 73, 'validation': 5, 'test': 4} samples removed across splits.
+'extractiveness': {'train': 270, 'validation': 3, 'test': 3} samples removed across splits.
+'exact_duplicate': {'train': 3088, 'validation': 0, 'test': 2} samples removed across splits.
+'both_duplicate': {'train': 0, 'validation': 0, 'test': 0} samples removed across splits.
+'summary_duplicate': {'train': 1809, 'validation': 73, 'test': 39} samples removed across splits.
+'reference_duplicate': {'train': 9, 'validation': 0, 'test': 0} samples removed across splits.
+Process finished with exit code 137 (interrupted by signal 9: SIGKILL)
