@@ -73,7 +73,7 @@ class Analyzer:
         :param comparison_method:
         :return:
         """
-        raise NotImplementedError("Currently this function is not fully implementec!")
+        raise NotImplementedError("Currently this function is not fully implemented! Instead, use `summaries.cleaner`.")
 
         if not (train_set or validation_set or test_set):
             raise ValueError("No data samples provided (all sets were empty)!")
@@ -163,7 +163,9 @@ class Analyzer:
         Determines whether a summary is fully extractive, by checking whether it verbatim appears in the reference.
         This is suitable for quickly evaluating datasets, but should be only used as an approximate metric.
         """
-
+        # TODO: This method can also be improved by separating sentences and individually checking whether these appear.
+        #  This then allows for a non-contiguous check of extractiveness. On the token-level, this could be done by
+        #  basically computing ROUGE-L scores; a 1.0 ROUGE-L score equals full extractiveness, too.
         if summary in reference:
             return True
         else:
