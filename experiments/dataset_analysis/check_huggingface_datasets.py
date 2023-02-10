@@ -12,8 +12,12 @@ def custom_print_details(summary: str, reference: str, full_sample: Dict,
     Example of a print_details function implementation.
     This will print the reference and summary if the sample has been filtered out for any reason.
     """
-    if filter_reason is "summary_duplicate":
-        print(f"{full_sample}")
+    if filter_reason == "summary_duplicate":
+        try:
+            print(f"{full_sample['summary']}")
+        except KeyError:
+            print(f"{full_sample['highlights']}")
+
 
 if __name__ == '__main__':
     analyzer = Analyzer(lemmatize=True, lang="en")
