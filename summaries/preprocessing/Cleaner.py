@@ -34,8 +34,10 @@ class Cleaner:
         Initializes a `Cleaner` object with specified parameters.
         :param analyzer: The analyzer defines properties for the analysis, such as the language processing and
         :param deduplication_method: Currently accepts the following options:
-            * "first", which will retain the first sample with a particular text, and discard other duplicates or leaks,
+            * "first"/"train_first", which will retain the first sample with a particular text,
+              and discard other duplicates or leaks,
             * "test_first", which will reverse the order of passed sets from (train, val, test) to (test, val, train),
+              which has the advantage of retaining a more "untouched" version of the test set, or
             * "none", which will perform no duplicate filtering.
         :param min_compression_ratio: Minimum compression ratio (len(reference)/len(summary) that should be ensured.
             1.0 means summaries have to be strictly shorter than the references.
@@ -214,7 +216,7 @@ class Cleaner:
                             filter_count_with_reason[filter_reason][split_name] += 1
                             continue
                 # Deduplication is a bit more tricky, especially once we add more supported methods.
-                if self.deduplication_method in ["first", "test_first"]:
+                if self.deduplication_method in ["first", "train_first", "test_first"]:
                     if (current_reference, current_summary) in previously_seen_both:
                         filter_reason = "exact_duplicate"
                         filter_count_with_reason[filter_reason][split_name] += 1
@@ -242,7 +244,7 @@ class Cleaner:
                 # Also retain their checks for deduplication if necessary. This can be only done at this stage,
                 # because it might be the case that we introduce more filters later on, which could conflict with
                 # the current deduplication step.
-                if self.deduplication_method in ["first", "test_first"]:
+                if self.deduplication_method in ["first", "train_first", "test_first"]:
                     previously_seen_summaries.add(current_summary)
                     previously_seen_references.add(current_reference)
                     previously_seen_both.add((current_reference, current_summary))
