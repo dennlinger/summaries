@@ -13,6 +13,7 @@ scipy
 tqdm
 protobuf
 nltk
+protobuf==3.20.*  # required to avoid some tokenizer error.
 
 # Used in debugging
 # pke<=2.0
