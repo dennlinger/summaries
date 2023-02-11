@@ -80,7 +80,7 @@ def get_dataset(name: str, filtered: bool = False):
         summary_column = "summary"
     elif "eurlexsum" in name:
         # Download link will be added shortly
-        path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../", "/eurlexsum/german_eurlexsum.json")
+        path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../", "eurlexsum/german_eurlexsum.json")
         with open(path) as f:
             data = json.load(f)
         data = {
