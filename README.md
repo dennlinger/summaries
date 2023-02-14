@@ -170,12 +170,18 @@ It allows the comparison of two systems, A and B, on a gold test set. The hypoth
 ```python3
 from summaries.evaluation import paired_bootstrap_test
 
-# You can use any function that takes system and gold inputs and returns a singular float "score"
+# Replace with any metric of your choice, but make sure it takes
+# litss of system and gold inputs and returns a singular float "score"
 def accuracy(system, gold):
     return sum([s == g for s, g in zip(system, gold)]) / len(system)
     
 # By default performs 10k iterations of re-sampling
-paired_bootstrap_test(gold_labels, system_a_predictions, system_b_predictions, scoring_fucntion=accuracy)
+paired_bootstrap_test(gold_labels,
+                      system_a_predictions,
+                      system_b_predictions,
+                      scoring_fucntion=accuracy,
+                      n_resamples=1000,
+                      seed=12345)
 ```
 
 ## Extending or Supplying Own Components
