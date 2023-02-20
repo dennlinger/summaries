@@ -3,14 +3,14 @@ A "collection" of tests for significance testing.
 Special thanks go to Michael Hagmann (https://www.cl.uni-heidelberg.de/statnlpgroup/members/hagmann/)
 for fruitful discussions and a gentle introduction to significance testing in NLP.
 """
-from typing import List, Callable
+from typing import List, Callable, Union
 
 import numpy as np
 
 
-def paired_bootstrap_test(gold_labels: List,
-                          system_a: List,
-                          system_b: List,
+def paired_bootstrap_test(gold_labels: Union[List, np.ndarray],
+                          system_a: Union[List, np.ndarray],
+                          system_b: Union[List, np.ndarray],
                           scoring_function: Callable,
                           n_resamples: int = 10_000,
                           seed: int = 256) -> float:
@@ -74,9 +74,9 @@ def paired_bootstrap_test(gold_labels: List,
     return p_value
 
 
-def permutation_test(gold_labels: List,
-                     system_a: List,
-                     system_b: List,
+def permutation_test(gold_labels: Union[List, np.ndarray],
+                     system_a: Union[List, np.ndarray],
+                     system_b: Union[List, np.ndarray],
                      scoring_function: Callable,
                      n_resamples: int = 10_000,
                      seed: int = 256) -> float:
