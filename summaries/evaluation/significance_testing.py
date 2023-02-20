@@ -1,5 +1,7 @@
 """
-A "collection" of tests for significance testing
+A "collection" of tests for significance testing.
+Special thanks go to Michael Hagmann (https://www.cl.uni-heidelberg.de/statnlpgroup/members/hagmann/)
+for fruitful discussions and a gentle introduction to significance testing in NLP.
 """
 from typing import List, Callable
 
@@ -79,7 +81,13 @@ def permutation_test(gold_labels: List,
                      n_resamples: int = 10_000,
                      seed: int = 256) -> float:
     """
-
+    Method to compute a resampling-based significance test.
+    It will be tested whether system A is significantly better than system B and return the p-value.
+    Permutates the predictions of A and B with 50% likelihood, and scores the altered systems A' and B' again.
+    The test counts the number of times the difference between permuted scores is larger than the observed difference
+    between A and B, and returns the fraction of times this is the case.
+    This implementation follows the algorithm by (Riezler and Maxwell III, 2005), see:
+    https://aclanthology.org/W05-0908.pdf
     :param gold_labels: List of ground truth labels/values for a test set.
     :param system_a: List of predictions of system A on the test set. Assumed to be the "better" system."
     :param system_b: List of predictions of system B on the test set. Assumed to be the "baseline" method.
@@ -89,3 +97,30 @@ def permutation_test(gold_labels: List,
     :param seed: Random seed to ensure reproducible results.
     :return: p-value of the statistical significance that A is better than B.
     """
+
+    if len(gold_labels) != len(system_a) != len(system_b):
+        raise ValueError("Ensure that gold and system outputs have the same lengths!")
+
+    rng = np.random.default_rng(seed=seed)
+
+    # Compute |S_A - S_B|
+    base_difference = abs(scoring_function(system_a, gold_labels) - scoring_function(system_b, gold_labels))
+    number_times_outliers = 0
+
+    joint_labels = np.array([system_a, system_b])
+    gold_labels = np.array(gold_labels)
+    for _ in range(n_resamples):
+        # Randomly permutes the two lists along an axis
+        permutation = rng.permuted(joint_labels, axis=0)
+
+        # Re-build the permuted systems of A' and B'
+        permuted_A = permutation[0, :]
+        permuted_B = permutation[1, :]
+
+        # Check whether the current hypothesis is a "greater outlier"
+        permuted_difference = abs(scoring_function(permuted_A, gold_labels) - scoring_function(permuted_B, gold_labels))
+        if permuted_difference >= base_difference:
+            number_times_outliers += 1
+
+    # Return the offset p-value, following (Riezler and Maxwell, 2005)
+    return (number_times_outliers + 1) / (n_resamples + 1)

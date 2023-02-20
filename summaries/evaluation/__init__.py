@@ -1,1 +1,1 @@
-from .significance_testing import paired_bootstrap_test
+from .significance_testing import paired_bootstrap_test, permutation_test
