@@ -70,3 +70,22 @@ def paired_bootstrap_test(gold_labels: List,
 
     p_value = 1 - (number_of_times_a_better_b / n_resamples)
     return p_value
+
+
+def permutation_test(gold_labels: List,
+                     system_a: List,
+                     system_b: List,
+                     scoring_function: Callable,
+                     n_resamples: int = 10_000,
+                     seed: int = 256) -> float:
+    """
+
+    :param gold_labels: List of ground truth labels/values for a test set.
+    :param system_a: List of predictions of system A on the test set. Assumed to be the "better" system."
+    :param system_b: List of predictions of system B on the test set. Assumed to be the "baseline" method.
+    :param scoring_function: An arbitrary evaluation function which takes in two lists (system, gold) and produces
+        an evaluation score (singular float).
+    :param n_resamples: Number of times to re-sample the test set.
+    :param seed: Random seed to ensure reproducible results.
+    :return: p-value of the statistical significance that A is better than B.
+    """
