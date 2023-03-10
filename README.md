@@ -154,17 +154,20 @@ The baselines can handle inputs of both formats natively.
 from summaries.baselines import lead_3, lexrank_st
 import spacy
 
+# specify the length of the lexrank summary in segments:
+num_segments = 5
+
 lead_3(input_text, lang="en")
-lexrank_st(input_text, lang="en")
+lexrank_st(input_text, lang="en", num_sentences=num_segments)
 
 # or, alternatively:
 nlp = spacy.load("en_core_web_sm")
 lead_3(input_text, processor=nlp)
-lexrank_st(input_text, processor=nlp)
+lexrank_st(input_text, processor=nlp,num_sentences=num_segments)
 
 # or, split the text yourself first:
 text = [segment for segment in text]
-lexrank_st(text)
+lexrank_st(text, num_sentences=num_segments)
 ```
 
 ### Significance Testing
