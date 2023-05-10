@@ -28,6 +28,7 @@ class AspectSummarizer:
 
         # TODO: Enable passing of config files with attributes
         self._assign_extractor(extractor, retriever)
+        self._assign_generator(generator)
 
     def _assign_extractor(self, extractor: Union[str, Extractor], retriever: Union[str, Retriever]) -> None:
         """
@@ -35,6 +36,7 @@ class AspectSummarizer:
         :param extractor: Either existing extractor object or string identifier for a model.
         :return: valid Extractor object
         """
+        # FIXME: Can cause problems with custom classes overwriting base!
         if isinstance(extractor, Extractor):
             self.extractor = extractor
         elif extractor == "yake":
@@ -42,6 +44,7 @@ class AspectSummarizer:
         else:
             raise NotImplementedError("Extractor component not yet supported!")
 
+        # FIXME: Can cause problems with custom classes overwriting base!
         if isinstance(retriever, Retriever):
             self.retriever = retriever
         elif retriever.lower() == "frequency":
@@ -52,8 +55,34 @@ class AspectSummarizer:
         else:
             raise NotImplementedError("Retriever component not yet supported!")
 
-    def summarize(self, source_text: Union[str, List[str]], max_length: int = -1):
+    def _assign_generator(self, generator: Union[str, Generator]) -> None:
+
+        # FIXME: Can cause problems with custom classes overwriting base!
+        if isinstance(generator, Generator):
+            self.generator = generator
+        else:
+            raise NotImplementedError("Other Generator models currently not supported!")
+
+    def summarize(self, source_text: Union[str, list[str]], ex_ante_aspects: dict, ex_post_aspects: dict):
         """
+
+        :param source_text: Single input text, or otherwise collection (list) of several input texts.
+        :param ex_ante_aspects: Dictionary containing the desired ex-ante (extractive) aspects and the parameters.
+            # TODO: Add list of all accepted parameters
+            Example:
+                ex_ante_aspects = {
+                    "length": 500,  # assumed to be in characters
+                    "query": ["Barack Obama", "Childhood", "Political Career"],  # three different queries
+                    ...
+                }
+        :param ex_post_aspects: Dictionary containing the desired ex-post (generative) aspects and their parameters.
+            # TODO: Add list of all accepted parameters
+        :return: An aspect-focused summary generated with the respective specified aspects.
+        """
+
+    def topic_summarize(self, source_text: Union[str, list[str]], max_length: int = -1):
+        """
+        TODO: Refactor to reflect changes that are no longer in line with the proposed model!
         Extractively summarizes documents based on a simple topic-aggregation strategy.
         :param source_text: Document text(s) that should be summarized.
         :param max_length: Maximum length (in number of sentences) for the target summary.

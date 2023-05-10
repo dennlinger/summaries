@@ -24,5 +24,5 @@ if __name__ == '__main__':
     extractor = OracleExtractor(len(oracle_keywords), lang="de", given_keywords=oracle_keywords)
     summ = AspectSummarizer(extractor, "dpr")
 
-    print(summ.summarize(source_text))
+    print(summ.topic_summarize(source_text))
 
