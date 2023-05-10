@@ -8,6 +8,7 @@ from spacy.language import Language
 
 from .extractors import Extractor, YakeExtractor
 from .retrievers import Retriever, FrequencyRetriever, DPRRetriever
+from .generators import Generator
 from .index import Index
 from .utils import get_nlp_model
 
@@ -15,7 +16,9 @@ from .utils import get_nlp_model
 class AspectSummarizer:
 
     extractor: Extractor
+    # FIXME: Merge Retriever into extractor class?
     retriever: Retriever
+    generator: Generator
     index: Index
     processor: Language
 
@@ -24,35 +27,28 @@ class AspectSummarizer:
         self.processor = get_nlp_model("sm", disable=tuple("ner"), lang="de")
 
         # TODO: Enable passing of config files with attributes
-        self.extractor = self._assign_extractor(extractor)
-        self.retriever = self._assign_retriever(retriever)
+        self._assign_extractor(extractor, retriever)
 
-    def _assign_extractor(self, extractor: Union[str, Extractor]) -> Extractor:
+    def _assign_extractor(self, extractor: Union[str, Extractor], retriever: Union[str, Retriever]) -> None:
         """
         Determine whether an existing Extractor object was passed, or otherwise create appropriate Extractor object.
         :param extractor: Either existing extractor object or string identifier for a model.
         :return: valid Extractor object
         """
         if isinstance(extractor, Extractor):
-            return extractor
+            self.extractor = extractor
         elif extractor == "yake":
-            return YakeExtractor(num_topics=5, max_ngram_size=3, lang="de")
+            self.extractor = YakeExtractor(num_topics=5, max_ngram_size=3, lang="de")
         else:
             raise NotImplementedError("Extractor component not yet supported!")
 
-    def _assign_retriever(self, retriever: Union[str, Retriever]) -> Retriever:
-        """
-        Similar to _assign_extractor, assigns the correct retriever object based on input
-        :param retriever: Object representing an existing retriever or string identifier for a model.
-        :return: valid Retriever object
-        """
         if isinstance(retriever, Retriever):
-            return retriever
+            self.retriever = retriever
         elif retriever.lower() == "frequency":
-            return FrequencyRetriever(self.processor)
+            self.retriever = FrequencyRetriever(self.processor)
         elif retriever.lower() == "dpr":
-            return DPRRetriever("deepset/gbert-base-germandpr-question_encoder",
-                                "deepset/gbert-base-germandpr-ctx_encoder")
+            self.retriever = DPRRetriever("deepset/gbert-base-germandpr-question_encoder",
+                                          "deepset/gbert-base-germandpr-ctx_encoder")
         else:
             raise NotImplementedError("Retriever component not yet supported!")
 
