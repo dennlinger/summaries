@@ -8,5 +8,5 @@ class Generator:
     def __init__(self):
         self.model = None
 
-    def generate(self, text: str) -> str:
+    def generate(self, text) -> str:
         raise NotImplementedError("Generator base not implemented!")
