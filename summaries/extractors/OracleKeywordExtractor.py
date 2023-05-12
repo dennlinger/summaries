@@ -9,16 +9,18 @@ from typing import List
 from .ExtractorBase import Extractor
 
 
-class OracleExtractor(Extractor):
+class OracleKeywordExtractor(Extractor):
     given_keywords: List[str]
+    num_topics: int
 
     def __init__(self, num_topics: int, lang: str, given_keywords: List[str]):
-        super(OracleExtractor, self).__init__(num_topics=num_topics, lang=lang)
+        super(OracleKeywordExtractor, self).__init__(lang=lang)
 
+        self.num_topics = num_topics
         self.given_keywords = given_keywords
 
         if num_topics > len(self.given_keywords):
             raise ValueError("Number of topics to be returned greater than available keywords!")
 
-    def extract_keywords(self, text: str) -> List[str]:
-        return self.given_keywords[:self.num_topics]
+    def filter(self):
+        raise NotImplementedError("No filter function available for OracleKeywordExtractor yet.")

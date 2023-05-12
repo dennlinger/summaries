@@ -35,7 +35,7 @@ class LeadExtractor(Extractor):
         """
         for segment in segments:
             if self.fixed_cutoff:
-                if segment.segment_id < self.fixed_cutoff - 1:
+                if segment.segment_id < self.fixed_cutoff:
                     segment.relevance_vector.append(1.0)
                 else:
                     segment.relevance_vector.append(0.0)

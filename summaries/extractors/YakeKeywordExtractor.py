@@ -9,12 +9,15 @@ from yake import KeywordExtractor
 from .ExtractorBase import Extractor
 
 
-class YakeExtractor(Extractor):
+class YakeKeywordExtractor(Extractor):
     max_ngram_size: int
+    num_topics: int
     yake_extractor: KeywordExtractor
 
-    def __init__(self, num_topics, max_ngram_size=3, lang="de"):
-        super(YakeExtractor, self).__init__(num_topics=num_topics, lang=lang)
+    def __init__(self, num_topics: int, max_ngram_size: int = 3, lang: str = "de"):
+        super(YakeKeywordExtractor, self).__init__(lang=lang)
+
+        self.num_topics = num_topics
         self.max_ngram_size = max_ngram_size
 
         self.yake_extractor = KeywordExtractor(self.lang, self.max_ngram_size)
