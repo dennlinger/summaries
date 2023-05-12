@@ -3,24 +3,29 @@ Tests for document representations.
 """
 import unittest
 
-from summaries.document import Document, Paragraph, Sentence
+from summaries.document import Document, Segment
 from summaries.utils import get_nlp_model
 
 
 class TestDocument(unittest.TestCase):
     def test_document_init(self):
+        nlp = get_nlp_model("sm", lang="de")
         raw_text = "Dies ist ein Test für Dokumente. Er beinhaltet zwei Sätze über das Dokument."
-        doc = Document(raw_text, determine_paragraphs=False, text_lang="de")
+        processed = nlp(raw_text)
+        doc = Document(processed, 0, segment_level="document")
 
         self.assertEqual(doc.raw_text, raw_text)
-        self.assertEqual(len(doc.text), 2)
+        self.assertEqual(doc.document_id, 0)
+        self.assertEqual(len(doc), 1)
+
+        doc = Document(processed, 0, segment_level="sentence")
+        self.assertEqual(len(doc), 2)
+        self.assertEqual(doc.segments[0].parent_doc, doc)
 
 
-class TestParagraph(unittest.TestCase):
-    def test_paragraph_init(self):
-        nlp = get_nlp_model("sm", lang="de")
-        paragraph_text = ["Dies ist ein Paragraph.", "Er beinhaltet zwei Sätze über Paragraphen."]
-        paragraph = Paragraph([Sentence(nlp(sentence)) for sentence in paragraph_text], determine_temporal_tags=False)
+# class TestSegment(unittest.TestCase):
+#     def test_paragraph_init(self):
+#         paragraph_text = ["Dies ist ein Paragraph.", "Er beinhaltet zwei Sätze über Paragraphen."]
 
 
 if __name__ == '__main__':
