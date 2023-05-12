@@ -10,7 +10,7 @@ from tqdm import tqdm
 from pke.unsupervised.statistical import kpminer
 from pke import compute_document_frequency
 from pke.utils import get_stopwords, load_document_frequency_file
-from summaries.extractors import YakeExtractor
+from summaries.extractors import YakeKeywordExtractor
 
 
 def compute_doc_frequencies_for_kp20k(input_file, temp_dir, output_file):
@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
     # Uses the same parameters as in the long journal paper (n-gram size = 3, window size = 1 [per default])
     # Stopwords are automatically loaded if not provided by users.
-    yake10 = YakeExtractor(10, max_ngram_size=3)
+    yake10 = YakeKeywordExtractor(10, max_ngram_size=3)
 
     # First have to compute the document stats
     input_file = "/home/daumiller/kp20k_training.json"
