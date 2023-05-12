@@ -4,25 +4,27 @@ Minimal script to generate a summary over a single short article.
 from typing import List
 
 from summaries import AspectSummarizer
-from summaries.extractors import OracleExtractor
 
 
-def load_text_file_in_sentences(fn: str) -> List[str]:
+def load_text_file(fn: str) -> str:
     with open(fn, "r") as f:
         text = f.readlines()
 
     # Remove empty lines and headings
     text = [line.strip("\n ") for line in text if line.strip("\n ") and not line.startswith("=")]
-    return text
+    return "\n".join(text)
 
 
 if __name__ == '__main__':
 
-    source_text = load_text_file_in_sentences("Aachen_Wiki_short.txt")
-    oracle_keywords = ["Aachen", "Nordrhein-Westfalen", "Einwohner", "Aquae Granni", "Aachener Dom", "Universität",
-                       "UNESCO", "Oche"]
-    extractor = OracleExtractor(len(oracle_keywords), lang="de", given_keywords=oracle_keywords)
-    summ = AspectSummarizer(extractor, "dpr")
+    source_text = load_text_file("Aachen_Wiki_short.txt")
+    summ = AspectSummarizer(segment_level="sentence")
 
-    print(summ.topic_summarize(source_text))
+    ex_ante_aspects = {
+        "lead": [5]
+    }
+    ex_post_aspects = None
+
+    print(summ.summarize(source_text, ex_ante_aspects, segment_limit_intermediate_representation=5))
+
 
