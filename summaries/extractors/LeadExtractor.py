@@ -34,11 +34,13 @@ class LeadExtractor(Extractor):
         :return: List of scores for each individual segment.
         """
         for segment in segments:
+            # If we have a specified fixed cutoff position, ignore other relevance scores
             if self.fixed_cutoff:
                 if segment.segment_id < self.fixed_cutoff:
                     segment.relevance_vector.append(1.0)
                 else:
                     segment.relevance_vector.append(0.0)
+            # For unspecified cutoffs, append a relevance value according to our function
             elif self.decayed_relevance_func:
                 segment.relevance_vector.append(self.decayed_relevance_func(segment.segment_id))
 
@@ -49,7 +51,20 @@ class LeadExtractor(Extractor):
         :param relevance_threshold: Threshold value that is required for documents to be included.
         :return:
         """
-        raise NotImplementedError("Lead filter not implemented.")
+
+        result = []
+        # Filter the segments based on whichever criterion is specified.
+        for segment in segments:
+            if self.fixed_cutoff:
+                if relevance_threshold != 0.0:
+                    warnings.warn("relevance_threshold specified, but unused due to fixed cutoff.")
+                if segment.segment_id < self.fixed_cutoff:
+                    result.append(segment)
+            elif self.decayed_relevance_func:
+                if self.decayed_relevance_func(segment.segment_id) > relevance_threshold:
+                    result.append(segment)
+
+        return result
 
 
 def default_inverse_scaling(position: int) -> float:
