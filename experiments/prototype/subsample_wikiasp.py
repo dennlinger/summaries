@@ -16,8 +16,21 @@ def subsample_data(data, fn):
 
     np.random.seed(484839)
     subset = list(np.random.choice(consideration, 40, replace=False))
+
+    new_data = {}
+    for el in subset:
+        curr_inputs = []
+        for s in el["inputs"]:
+            if len(s) >= 25:
+                curr_inputs.append(s)
+
+        new_data[el["exid"]] = {
+            "inputs": curr_inputs,
+            "targets": el["targets"]
+        }
+
     with open(fn, "w") as f:
-        json.dump(subset, f, indent=2, ensure_ascii=False)
+        json.dump(new_data, f, indent=2, ensure_ascii=False)
 
 
 if __name__ == '__main__':
@@ -26,11 +39,11 @@ if __name__ == '__main__':
     data = []
     for line in lines:
         data.append(json.loads(line))
-    subsample_data(data, "./TV.json")
+    subsample_data(data, "./TV_filtered.json")
 
     with open("../../../Downloads/Company/test.jsonl", "r") as f:
         lines = f.readlines()
     data = []
     for line in lines:
         data.append(json.loads(line))
-    subsample_data(data, "./Company.json")
+    subsample_data(data, "./Company_filtered.json")
