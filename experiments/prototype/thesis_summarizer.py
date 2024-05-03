@@ -100,11 +100,11 @@ def query_relevance():
     embeddings = np.ndarray(shape=(0, 1024), dtype=np.float32)
 
     for chapter in tqdm(range(2, 8)):
-        with open(f"./Thesis//Thesis_{chapter}.json", "r") as f:
+        with open(f"./Thesis/Thesis_{chapter}.json", "r") as f:
             data = json.load(f)
             sentences.extend(data)
 
-        with open(f"./Thesis//Thesis_{chapter}.npy", "rb") as f:
+        with open(f"./Thesis/Thesis_{chapter}.npy", "rb") as f:
             new_embs = np.load(f, allow_pickle=True)
             embeddings = np.concatenate((embeddings, new_embs), axis=0)
 
