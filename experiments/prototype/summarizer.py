@@ -13,6 +13,6 @@ if __name__ == '__main__':
     with open(fn) as f:
         data = json.load(f)
 
-    # st = SentenceTransformer("Alibaba-NLP/gte-large-en-v1.5",
-    #                          device="cpu",
-    #                          trust_remote_code=True)
+    st = SentenceTransformer("Alibaba-NLP/gte-large-en-v1.5",
+                             device="cpu",
+                             trust_remote_code=True)

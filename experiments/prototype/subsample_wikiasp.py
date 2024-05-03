@@ -47,3 +47,4 @@ if __name__ == '__main__':
     for line in lines:
         data.append(json.loads(line))
     subsample_data(data, "./Company_filtered.json")
+
